@@ -13,3 +13,6 @@ Thumbs.db
 
 # Dependencies
 node_modules/
+
+# branch-interview local state
+.branch-interview/
