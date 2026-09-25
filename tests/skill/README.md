@@ -14,7 +14,7 @@ Each sample is a fresh, isolated headless call — not a dispatched subagent. Ru
 ```bash
 cd "$RUN_DIR" && claude -p --setting-sources "" --disable-slash-commands \
   --strict-mcp-config --tools "" --model claude-sonnet-5 \
-  --system-prompt "$(cat arm-control.txt)" -- "$(cat prompt-<scenario>.txt)"
+  --system-prompt "$(cat arm-context.txt)" -- "$(cat prompt-<scenario>.txt)"
 ```
 
 The system prompt is the arm context; the user message is the prompt template below (dossier, code, setup, transcript, engineer's last message). One call = one sample. Save each reply to a file, e.g. `$RUN_DIR/out/<scenario>-<rep>.txt`.
