@@ -240,6 +240,34 @@ test_hunks_quoted_path() {
   assert_eq "hunks: quoted path no error" "" "$errs"
 }
 
+test_hunks_rename_with_binary_change() {
+  new_repo
+  git checkout -qb feat
+  { printf '\000\001\002'; head -c 200 /dev/zero | tr '\0' 'x'; } > blob.bin
+  git add -A && git commit -qm binary
+  git mv blob.bin moved.bin
+  { printf '\000\001\002'; head -c 200 /dev/zero | tr '\0' 'x'; printf 'y'; } > moved.bin
+  git add -A && git commit -qm rename_binary
+  local detect stat
+  detect=$(git diff -M --stat main HEAD | grep -c "moved.bin")
+  assert_eq "setup: rename detection active" "1" "$detect"
+  stat=$(scope hunks branch | cut -f2-)
+  assert_eq "hunks: rename+binary yields binary row only" "moved.bin	0-0	+0	-0	binary" "$stat"
+}
+
+test_hunks_quoted_binary_path() {
+  new_repo
+  git checkout -qb feat
+  printf '\000\001\002' > "we\"ird.bin" && git add -A && git commit -qm quoted_bin
+  local file kind errs
+  file=$(scope hunks branch | field 2)
+  kind=$(scope hunks branch | field 6)
+  errs=$(scope hunks branch 2>&1 >/dev/null)
+  assert_eq "hunks: quoted binary path unquoted" "we\"ird.bin" "$file"
+  assert_eq "hunks: quoted binary kind" "binary" "$kind"
+  assert_eq "hunks: quoted binary no error" "" "$errs"
+}
+
 # --- runner ---
 OUT=$(mktemp)
 for t in $(declare -F | awk '{ print $3 }' | grep '^test_'); do

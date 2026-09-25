@@ -177,12 +177,17 @@ split_hunks() {
     /^--- / { p = substr($0, 5); p = unquote(p); if (p != "/dev/null") oldfile = substr(p, 3); next }
     /^\+\+\+ / { p = substr($0, 5); p = unquote(p); file = (p == "/dev/null") ? oldfile : substr(p, 3); next }
     /^Binary files / {
+      pending_rename = 0
       p = $0
       sub(/ differ$/, "", p)
       i = index(p, " and ")
+      op = substr(p, 14, i - 14)
       np = substr(p, i + 5)
-      file = (np == "/dev/null") ? substr(p, 14, i - 14) : np
-      sub(/^[ab]\//, "", file)
+      op = unquote(op)
+      np = unquote(np)
+      sub(/^[ab]\//, "", op)
+      sub(/^[ab]\//, "", np)
+      file = (np == "/dev/null") ? op : np
       out = sprintf("%s/%06d", dir, ++n)
       printf "%s\t0-0\t0\t0\tbinary\n", file > out
       printf "%s\nbinary %s\n", file, idx > out
