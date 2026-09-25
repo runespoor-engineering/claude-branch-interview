@@ -242,15 +242,15 @@ test_hunks_quoted_path() {
 
 test_hunks_rename_with_binary_change() {
   new_repo
-  git checkout -qb feat
   { printf '\000\001\002'; head -c 200 /dev/zero | tr '\0' 'x'; } > blob.bin
   git add -A && git commit -qm binary
+  git checkout -qb feat
   git mv blob.bin moved.bin
   { printf '\000\001\002'; head -c 200 /dev/zero | tr '\0' 'x'; printf 'y'; } > moved.bin
   git add -A && git commit -qm rename_binary
   local detect stat
-  detect=$(git diff -M --stat main HEAD | grep -c "moved.bin")
-  assert_eq "setup: rename detection active" "1" "$detect"
+  detect=$(git diff -M --summary main HEAD | grep -c '^ rename ')
+  assert_eq "setup: true rename detected" "1" "$detect"
   stat=$(scope hunks branch | cut -f2-)
   assert_eq "hunks: rename+binary yields binary row only" "moved.bin	0-0	+0	-0	binary" "$stat"
 }
