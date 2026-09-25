@@ -251,6 +251,42 @@ cmd_hunks() {
   done
 }
 
+# Old state: hunk_hash<TAB>chunk_id<TAB>file<TAB>lines. Prints: status<TAB>hunk_hash<TAB>chunk_id
+# changed = hash is new but the hunk overlaps an unmatched old hunk in the same file.
+cmd_diff_state() {
+  local state=$1
+  shift
+  [ -f "$state" ] || die 2 "state file '$state' not found"
+  cmd_hunks "$@" | awk -F'\t' -v OFS='\t' '
+    function lo(r) { split(r, x, "-"); return x[1] + 0 }
+    function hi(r) { split(r, x, "-"); return x[2] + 0 }
+    NR == FNR { oh[++on] = $1; oc[on] = $2; of[on] = $3; ol[on] = $4; known[$1] = on; next }
+    {
+      if ($1 in known) { print "same", $1, oc[known[$1]]; seen[known[$1]] = 1; next }
+      id = "-"
+      for (i = 1; i <= on; i++)
+        if (!(i in seen) && of[i] == $2 && lo($3) <= hi(ol[i]) && lo(ol[i]) <= hi($3)) { id = oc[i]; seen[i] = 1; break }
+      print (id == "-" ? "new" : "changed"), $1, id
+    }
+    END { for (i = 1; i <= on; i++) if (!(i in seen)) print "removed", oh[i], oc[i] }
+  ' "$state" -
+}
+
+cmd_show() {
+  local want=$1 hf
+  shift
+  scratch
+  raw_diff "$@" | split_hunks "$SCRATCH"
+  for hf in "$SCRATCH"/*; do
+    [ -e "$hf" ] || continue
+    if [ "$(tail -n +2 "$hf" | git hash-object --stdin)" = "$want" ]; then
+      tail -n +3 "$hf"
+      return 0
+    fi
+  done
+  die 5 "hunk $want not found in scope"
+}
+
 main() {
   [ "$#" -ge 2 ] || usage
   local cmd=$1
@@ -259,6 +295,8 @@ main() {
   case "$cmd" in
     meta) check_mode "$@"; cmd_meta "$@" ;;
     hunks) check_mode "$@"; cmd_hunks "$@" ;;
+    diff-state) [ "$#" -ge 2 ] || usage; local s=$1; shift; check_mode "$@"; cmd_diff_state "$s" "$@" ;;
+    show) [ "$#" -ge 2 ] || usage; local h=$1; shift; check_mode "$@"; cmd_show "$h" "$@" ;;
     *) usage ;;
   esac
 }

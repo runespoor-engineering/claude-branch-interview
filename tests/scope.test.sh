@@ -268,6 +268,42 @@ test_hunks_quoted_binary_path() {
   assert_eq "hunks: quoted binary no error" "" "$errs"
 }
 
+test_diff_state() {
+  new_repo
+  git checkout -qb feat
+  sed 's/^b$/B/; s/^h$/H/' app.txt > t && mv t app.txt && git commit -qam change
+  local state="$REPO/.state.tsv"
+  scope hunks branch | awk -F'\t' -v OFS='\t' '{ print $1, "c" NR, $2, $3 }' > "$state"
+  sed 's/^H$/HH/' app.txt > t && mv t app.txt
+  printf 'z\n' > z.txt && git add z.txt && git commit -qam more
+  local out
+  out=$(scope diff-state "$state" branch | cut -f1,3 | sort | tr '\n' ' ')
+  assert_eq "diff-state: same/changed/new" "changed	c2 new	- same	c1 " "$out"
+  git rm -q z.txt && git checkout -q main -- app.txt && git commit -qm revert
+  out=$(scope diff-state "$state" branch | cut -f1,3 | sort | tr '\n' ' ')
+  assert_eq "diff-state: removed" "removed	c1 removed	c2 " "$out"
+}
+
+test_diff_state_missing_file() {
+  new_repo
+  scope diff-state /nonexistent.tsv branch >/dev/null 2>&1
+  assert_eq "diff-state: missing state file exits 2" "2" "$?"
+}
+
+test_show() {
+  new_repo
+  git checkout -qb feat
+  sed 's/^c$/C/' app.txt > t && mv t app.txt && git commit -qam change
+  local h
+  h=$(scope hunks branch | field 1)
+  assert_eq "show: prints hunk lines" "-c +C" "$(scope show "$h" branch | tr '\n' ' ' | sed 's/ $//')"
+  sed 's/^C$/CC/' app.txt > t && mv t app.txt
+  scope show "$h" uncommitted >/dev/null 2>&1
+  assert_eq "show: hunk edited mid-session exits 5" "5" "$?"
+  scope show deadbeef branch >/dev/null 2>&1
+  assert_eq "show: unknown hash exits 5" "5" "$?"
+}
+
 # --- runner ---
 OUT=$(mktemp)
 for t in $(declare -F | awk '{ print $3 }' | grep '^test_'); do
