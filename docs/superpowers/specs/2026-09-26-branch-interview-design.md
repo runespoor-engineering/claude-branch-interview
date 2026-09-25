@@ -193,11 +193,16 @@ Rules:
 Bash and git only; no `jq`, `shasum`, or `sha1sum`.
 
 ```
-scope.sh key        <mode> [paths]              → scope key
-scope.sh hunks      <mode> [paths]              → TSV: hunk_hash file start-end +N -M noise
-scope.sh diff-state <mode> [paths] <hunks.tsv>  → lines: new|changed|same|removed hunk_hash chunk_id
-scope.sh show       <hunk_hash>                 → hunk text for display
+scope.sh meta       <mode> [paths...]              → key=, mode=, base_sha=, head_sha=
+scope.sh hunks      <mode> [paths...]              → TSV: hunk_hash file start-end +N -M noise
+scope.sh diff-state <hunks.tsv> <mode> [paths...]  → TSV: new|changed|same|removed hunk_hash chunk_id
+scope.sh show       <hunk_hash> <mode> [paths...]  → hunk +/- lines for display
+
+Exit codes: 2 usage, 3 not a git repository, 4 no base branch, 5 hunk not found.
+Base override: BRANCH_INTERVIEW_BASE=<ref>.
 ```
+
+Fixed arguments come before the mode because `files` takes a variable number of paths; `meta` replaces `key` so that one call gives the state header.
 
 - **Hash:** `git hash-object --stdin` over the file path plus the hunk's `+`/`-` lines with trailing whitespace stripped. Line numbers are excluded, so shifted code keeps its hash.
 - **`changed` vs `new`:** if a hash is missing from saved state but the hunk overlaps an old chunk's file and lines, it is `changed`: the chunk id is kept and its status is reset. Otherwise it is `new`. Saved hashes with no current hunk are `removed`.
