@@ -84,6 +84,140 @@ cmd_meta() {
   echo "head_sha=$head"
 }
 
+LOCKFILES="package-lock.json yarn.lock pnpm-lock.yaml bun.lockb Cargo.lock Gemfile.lock poetry.lock uv.lock composer.lock go.sum Podfile.lock pubspec.lock mix.lock flake.lock"
+
+# Per-run scratch directory for split hunks, removed on exit.
+scratch() {
+  SCRATCH=$(mktemp -d)
+  trap 'rm -rf "$SCRATCH"' EXIT
+}
+
+# Prints the raw unified diff (-U0) for the scope, untracked files included.
+raw_diff() {
+  local mode=$1 from f
+  shift
+  from=$(from_sha "$mode")
+  local opts=(--no-color --no-ext-diff -M -U0)
+  case "$mode" in
+    branch) git_ diff "${opts[@]}" "$from" HEAD ;;
+    last-commit) git_ diff "${opts[@]}" "$from" HEAD ;;
+    uncommitted)
+      git_ diff "${opts[@]}" HEAD
+      git_ ls-files --others --exclude-standard -z | while IFS= read -r -d '' f; do
+        git_ diff "${opts[@]}" --no-index /dev/null "$f" || true
+      done
+      ;;
+    files)
+      git_ diff "${opts[@]}" "$from" -- "$@"
+      git_ ls-files --others --exclude-standard -z -- "$@" | while IFS= read -r -d '' f; do
+        git_ diff "${opts[@]}" --no-index /dev/null "$f" || true
+      done
+      ;;
+  esac
+}
+
+# Splits a -U0 diff into one file per hunk in dir $1.
+# Each hunk file: line 1 "file<TAB>start-end<TAB>added<TAB>removed<TAB>kind",
+# then the normalized hash input (path, then +/- lines without trailing whitespace).
+# kind: code | whitespace | rename | binary
+split_hunks() {
+  awk -v dir="$1" '
+    function flush() {
+      if (!open) return
+      kind = "code"
+      if (plus_s != "" && plus_s == minus_s) kind = "whitespace"
+      out = sprintf("%s/%06d", dir, ++n)
+      printf "%s\t%s\t%d\t%d\t%s\n", file, range, added, removed, kind > out
+      printf "%s", body > out
+      close(out)
+      open = 0
+    }
+    function start(r) {
+      flush()
+      open = 1; range = r; body = file "\n"; added = 0; removed = 0
+      plus_s = ""; minus_s = ""
+    }
+    /^diff --git / { flush(); file = ""; oldfile = ""; next }
+    /^rename from / { oldfile = substr($0, 13); next }
+    /^rename to / {
+      file = substr($0, 11)
+      out = sprintf("%s/%06d", dir, ++n)
+      printf "%s\t0-0\t0\t0\trename\n", file > out
+      printf "%s\nrename %s -> %s\n", file, oldfile, file > out
+      close(out)
+      next
+    }
+    /^--- / { p = substr($0, 5); if (p != "/dev/null") oldfile = substr(p, 3); next }
+    /^\+\+\+ / { p = substr($0, 5); file = (p == "/dev/null") ? oldfile : substr(p, 3); next }
+    /^Binary files / {
+      p = $0
+      sub(/ differ$/, "", p)
+      i = index(p, " and ")
+      np = substr(p, i + 5)
+      file = (np == "/dev/null") ? substr(p, 14, i - 14) : np
+      sub(/^[ab]\//, "", file)
+      out = sprintf("%s/%06d", dir, ++n)
+      printf "%s\t0-0\t0\t0\tbinary\n", file > out
+      printf "%s\nbinary %s\n", file, idx > out
+      close(out)
+      next
+    }
+    /^index / { idx = $2; next }
+    /^@@ / {
+      split($3, a, ",")
+      s = substr(a[1], 2) + 0
+      c = (2 in a) ? a[2] + 0 : 1
+      if (c == 0) { split($2, o, ","); s = substr(o[1], 2) + 0; e = s } else e = s + c - 1
+      if (s == 0) s = e = 0
+      start(s "-" e)
+      next
+    }
+    open && /^[+-]/ {
+      line = $0
+      sub(/[ \t\r]+$/, "", line)
+      body = body line "\n"
+      t = substr(line, 2); gsub(/[ \t\r]/, "", t)
+      if (substr(line, 1, 1) == "+") { added++; plus_s = plus_s t } else { removed++; minus_s = minus_s t }
+      next
+    }
+    END { flush() }
+  '
+}
+
+is_lockfile() {
+  local base=${1##*/} l
+  for l in $LOCKFILES; do
+    [ "$base" = "$l" ] && return 0
+  done
+  return 1
+}
+
+is_generated() {
+  local f=$1 attr
+  attr=$(git check-attr linguist-generated -- "$f" | sed 's/.*: //')
+  [ "$attr" = "set" ] || [ "$attr" = "true" ] && return 0
+  [ -f "$f" ] && head -n 5 "$f" | grep -iE 'do not edit|@generated' >/dev/null && return 0
+  return 1
+}
+
+# Prints: hunk_hash<TAB>file<TAB>start-end<TAB>+N<TAB>-M<TAB>noise
+cmd_hunks() {
+  local hf file range added removed kind noise hash
+  scratch
+  raw_diff "$@" | split_hunks "$SCRATCH"
+  for hf in "$SCRATCH"/*; do
+    [ -e "$hf" ] || continue
+    IFS=$'\t' read -r file range added removed kind < "$hf"
+    hash=$(tail -n +2 "$hf" | git hash-object --stdin)
+    if [ "$kind" != "code" ]; then noise=$kind
+    elif is_lockfile "$file"; then noise=lockfile
+    elif is_generated "$file"; then noise=generated
+    else noise=-
+    fi
+    printf '%s\t%s\t%s\t+%s\t-%s\t%s\n' "$hash" "$file" "$range" "$added" "$removed" "$noise"
+  done
+}
+
 main() {
   [ "$#" -ge 2 ] || usage
   local cmd=$1
@@ -91,6 +225,7 @@ main() {
   require_repo
   case "$cmd" in
     meta) check_mode "$@"; cmd_meta "$@" ;;
+    hunks) check_mode "$@"; cmd_hunks "$@" ;;
     *) usage ;;
   esac
 }
