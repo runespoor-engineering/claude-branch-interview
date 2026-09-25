@@ -220,6 +220,26 @@ test_hunks_no_base() {
   assert_eq "hunks: no base exits 4" "4" "$?"
 }
 
+test_hunks_rename_with_edit() {
+  new_repo
+  git checkout -qb feat
+  git mv app.txt moved.txt
+  sed 's/^c$/C/' moved.txt > t && mv t moved.txt
+  git add -A && git commit -qm rename_edit
+  assert_eq "hunks: rename with edit yields code row only" "moved.txt	3-3	+1	-1	-" "$(scope hunks branch | cut -f2-)"
+}
+
+test_hunks_quoted_path() {
+  new_repo
+  git checkout -qb feat
+  printf 'x\n' > "weird\"name.txt" && git add -A && git commit -qm quoted
+  local file errs
+  file=$(scope hunks branch | field 2)
+  errs=$(scope hunks branch 2>&1 >/dev/null)
+  assert_eq "hunks: quoted path is unquoted" "weird\"name.txt" "$file"
+  assert_eq "hunks: quoted path no error" "" "$errs"
+}
+
 # --- runner ---
 OUT=$(mktemp)
 for t in $(declare -F | awk '{ print $3 }' | grep '^test_'); do

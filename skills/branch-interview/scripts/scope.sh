@@ -122,6 +122,24 @@ raw_diff() {
 # kind: code | whitespace | rename | binary
 split_hunks() {
   awk -v dir="$1" '
+    function unquote(p) {
+      if (substr(p, 1, 1) != "\"") return p
+      p = substr(p, 2, length(p) - 2)
+      result = ""
+      i = 1
+      while (i <= length(p)) {
+        c = substr(p, i, 1)
+        if (c == "\\" && i + 1 <= length(p)) {
+          next_c = substr(p, i + 1, 1)
+          if (next_c == "\"") { result = result "\""; i += 2 }
+          else if (next_c == "\\") { result = result "\\"; i += 2 }
+          else if (next_c == "t") { result = result "\t"; i += 2 }
+          else if (next_c == "n") { result = result "\n"; i += 2 }
+          else { result = result c; i++ }
+        } else { result = result c; i++ }
+      }
+      return result
+    }
     function flush() {
       if (!open) return
       kind = "code"
@@ -132,23 +150,32 @@ split_hunks() {
       close(out)
       open = 0
     }
+    function flush_pending_rename() {
+      if (!pending_rename) return
+      out = sprintf("%s/%06d", dir, ++n)
+      printf "%s\t0-0\t0\t0\trename\n", file > out
+      printf "%s", pending_rename_text > out
+      close(out)
+      pending_rename = 0
+      pending_rename_text = ""
+    }
     function start(r) {
+      flush_pending_rename()
       flush()
       open = 1; range = r; body = file "\n"; added = 0; removed = 0
       plus_s = ""; minus_s = ""
     }
-    /^diff --git / { flush(); file = ""; oldfile = ""; next }
-    /^rename from / { oldfile = substr($0, 13); next }
+    /^diff --git / { flush_pending_rename(); flush(); file = ""; oldfile = ""; pending_rename = 0; next }
+    /^rename from / { p = substr($0, 13); oldfile = unquote(p); next }
     /^rename to / {
-      file = substr($0, 11)
-      out = sprintf("%s/%06d", dir, ++n)
-      printf "%s\t0-0\t0\t0\trename\n", file > out
-      printf "%s\nrename %s -> %s\n", file, oldfile, file > out
-      close(out)
+      p = substr($0, 11)
+      file = unquote(p)
+      pending_rename = 1
+      pending_rename_text = file "\nrename " oldfile " -> " file "\n"
       next
     }
-    /^--- / { p = substr($0, 5); if (p != "/dev/null") oldfile = substr(p, 3); next }
-    /^\+\+\+ / { p = substr($0, 5); file = (p == "/dev/null") ? oldfile : substr(p, 3); next }
+    /^--- / { p = substr($0, 5); p = unquote(p); if (p != "/dev/null") oldfile = substr(p, 3); next }
+    /^\+\+\+ / { p = substr($0, 5); p = unquote(p); file = (p == "/dev/null") ? oldfile : substr(p, 3); next }
     /^Binary files / {
       p = $0
       sub(/ differ$/, "", p)
@@ -164,6 +191,7 @@ split_hunks() {
     }
     /^index / { idx = $2; next }
     /^@@ / {
+      pending_rename = 0
       split($3, a, ",")
       s = substr(a[1], 2) + 0
       c = (2 in a) ? a[2] + 0 : 1
@@ -180,7 +208,7 @@ split_hunks() {
       if (substr(line, 1, 1) == "+") { added++; plus_s = plus_s t } else { removed++; minus_s = minus_s t }
       next
     }
-    END { flush() }
+    END { flush_pending_rename(); flush() }
   '
 }
 
