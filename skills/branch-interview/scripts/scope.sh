@@ -82,6 +82,7 @@ cmd_meta() {
   echo "mode=$mode"
   echo "base_sha=$base"
   echo "head_sha=$head"
+  echo "root=$(pwd -P)"
 }
 
 LOCKFILES="package-lock.json yarn.lock pnpm-lock.yaml bun.lockb Cargo.lock Gemfile.lock poetry.lock uv.lock composer.lock go.sum Podfile.lock pubspec.lock mix.lock flake.lock"
@@ -97,7 +98,8 @@ raw_diff() {
   local mode=$1 from f
   shift
   from=$(from_sha "$mode")
-  local opts=(--no-color --no-ext-diff -M -U0)
+  # Fixed prefixes and --no-relative keep paths stable under diff.noprefix / diff.relative.
+  local opts=(--no-color --no-ext-diff --no-relative --src-prefix=a/ --dst-prefix=b/ -M -U0)
   case "$mode" in
     branch) git_ diff "${opts[@]}" "$from" HEAD ;;
     last-commit) git_ diff "${opts[@]}" "$from" HEAD ;;
@@ -174,8 +176,8 @@ split_hunks() {
       pending_rename_text = file "\nrename " oldfile " -> " file "\n"
       next
     }
-    /^--- / { p = substr($0, 5); p = unquote(p); if (p != "/dev/null") oldfile = substr(p, 3); next }
-    /^\+\+\+ / { p = substr($0, 5); p = unquote(p); file = (p == "/dev/null") ? oldfile : substr(p, 3); next }
+    /^--- / { p = substr($0, 5); sub(/\t$/, "", p); p = unquote(p); if (p != "/dev/null") oldfile = substr(p, 3); next }
+    /^\+\+\+ / { p = substr($0, 5); sub(/\t$/, "", p); p = unquote(p); file = (p == "/dev/null") ? oldfile : substr(p, 3); next }
     /^Binary files / {
       pending_rename = 0
       p = $0
@@ -233,15 +235,35 @@ is_generated() {
   return 1
 }
 
+# Splits the scope into $SCRATCH and prints: hunk_hash<TAB>hunk_file.
+# Identical hunks in one file get "#<n>" appended to the hash input from the second copy on,
+# so every hunk has its own hash and the first copy keeps the plain one.
+# The caller runs `scratch` first, in the same process that reads the hunk files.
+hunk_hashes() {
+  local hf base n hash seen
+  seen="$SCRATCH/.seen"
+  raw_diff "$@" | split_hunks "$SCRATCH"
+  : > "$seen"
+  for hf in "$SCRATCH"/[0-9]*; do
+    [ -e "$hf" ] || continue
+    base=$(tail -n +2 "$hf" | git hash-object --stdin)
+    n=$(grep -c "^$base\$" "$seen" || true)
+    echo "$base" >> "$seen"
+    if [ "$n" -eq 0 ]; then
+      hash=$base
+    else
+      hash=$({ tail -n +2 "$hf"; printf '#%d\n' "$((n + 1))"; } | git hash-object --stdin)
+    fi
+    printf '%s\t%s\n' "$hash" "$hf"
+  done
+}
+
 # Prints: hunk_hash<TAB>file<TAB>start-end<TAB>+N<TAB>-M<TAB>noise
 cmd_hunks() {
   local hf file range added removed kind noise hash
   scratch
-  raw_diff "$@" | split_hunks "$SCRATCH"
-  for hf in "$SCRATCH"/*; do
-    [ -e "$hf" ] || continue
+  hunk_hashes "$@" | while IFS=$'\t' read -r hash hf; do
     IFS=$'\t' read -r file range added removed kind < "$hf"
-    hash=$(tail -n +2 "$hf" | git hash-object --stdin)
     if [ "$kind" != "code" ]; then noise=$kind
     elif is_lockfile "$file"; then noise=lockfile
     elif is_generated "$file"; then noise=generated
@@ -253,6 +275,7 @@ cmd_hunks() {
 
 # Old state: hunk_hash<TAB>chunk_id<TAB>file<TAB>lines. Prints: status<TAB>hunk_hash<TAB>chunk_id
 # changed = hash is new but the hunk overlaps an unmatched old hunk in the same file.
+# Noise hunks are skipped: the state holds only non-noise hunks.
 cmd_diff_state() {
   local state=$1
   shift
@@ -261,6 +284,7 @@ cmd_diff_state() {
     function lo(r) { split(r, x, "-"); return x[1] + 0 }
     function hi(r) { split(r, x, "-"); return x[2] + 0 }
     NR == FNR { oh[++on] = $1; oc[on] = $2; of[on] = $3; ol[on] = $4; known[$1] = on; next }
+    $6 != "-" { next }
     {
       if ($1 in known) { print "same", $1, oc[known[$1]]; seen[known[$1]] = 1; next }
       id = "-"
@@ -276,28 +300,40 @@ cmd_show() {
   local want=$1 hf
   shift
   scratch
-  raw_diff "$@" | split_hunks "$SCRATCH"
-  for hf in "$SCRATCH"/*; do
-    [ -e "$hf" ] || continue
-    if [ "$(tail -n +2 "$hf" | git hash-object --stdin)" = "$want" ]; then
-      tail -n +3 "$hf"
-      return 0
-    fi
-  done
-  die 5 "hunk $want not found in scope"
+  hf=$(hunk_hashes "$@" | awk -F'\t' -v w="$want" '$1 == w { print $2; exit }')
+  [ -n "$hf" ] || die 5 "hunk $want not found in scope"
+  tail -n +3 "$hf"
 }
 
 main() {
   [ "$#" -ge 2 ] || usage
-  local cmd=$1
+  local cmd=$1 fixed="" mode prefix p
   shift
-  require_repo
   case "$cmd" in
-    meta) check_mode "$@"; cmd_meta "$@" ;;
-    hunks) check_mode "$@"; cmd_hunks "$@" ;;
-    diff-state) [ "$#" -ge 2 ] || usage; local s=$1; shift; check_mode "$@"; cmd_diff_state "$s" "$@" ;;
-    show) [ "$#" -ge 2 ] || usage; local h=$1; shift; check_mode "$@"; cmd_show "$h" "$@" ;;
+    meta|hunks) ;;
+    diff-state|show) [ "$#" -ge 2 ] || usage; fixed=$1; shift ;;
     *) usage ;;
+  esac
+  require_repo
+  check_mode "$@"
+  mode=$1
+  shift
+  # Work from the repo root so scope and paths do not depend on the current directory.
+  # `files` paths are relative to the caller's directory: prefix them, drop a leading "./".
+  prefix=$(git rev-parse --show-prefix)
+  case "$fixed" in /*|"") ;; *) [ "$cmd" = diff-state ] && fixed="$PWD/$fixed" ;; esac
+  cd "$(git rev-parse --show-toplevel)"
+  local paths=()
+  for p in "$@"; do
+    p=${p#./}
+    paths+=("$prefix$p")
+  done
+  set -- "$mode" ${paths[@]+"${paths[@]}"}
+  case "$cmd" in
+    meta) cmd_meta "$@" ;;
+    hunks) cmd_hunks "$@" ;;
+    diff-state) cmd_diff_state "$fixed" "$@" ;;
+    show) cmd_show "$fixed" "$@" ;;
   esac
 }
 

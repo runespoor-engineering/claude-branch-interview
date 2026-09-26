@@ -297,11 +297,62 @@ test_show() {
   local h
   h=$(scope hunks branch | field 1)
   assert_eq "show: prints hunk lines" "-c +C" "$(scope show "$h" branch | tr '\n' ' ' | sed 's/ $//')"
-  sed 's/^C$/CC/' app.txt > t && mv t app.txt
-  scope show "$h" uncommitted >/dev/null 2>&1
-  assert_eq "show: hunk edited mid-session exits 5" "5" "$?"
+  sed 's/^C$/CC/' app.txt > t && mv t app.txt && git commit -qam edit
+  scope show "$h" branch >/dev/null 2>&1
+  assert_eq "show: hunk edited and committed mid-session exits 5" "5" "$?"
   scope show deadbeef branch >/dev/null 2>&1
   assert_eq "show: unknown hash exits 5" "5" "$?"
+}
+
+test_dup_hunks() {
+  new_repo
+  git checkout -qb feat
+  awk '{ print } NR == 2 || NR == 8 { print "return err" }' app.txt > t && mv t app.txt && git commit -qam dup
+  local state="$REPO/.state.tsv" out
+  assert_eq "dup: identical hunks get distinct hashes" "2" "$(scope hunks branch | field 1 | sort -u | wc -l | tr -d ' ')"
+  scope hunks branch | awk -F'\t' -v OFS='\t' '{ print $1, "c" NR, $2, $3 }' > "$state"
+  awk 'NR == 10 { print "return err2"; next } { print }' app.txt > t && mv t app.txt && git commit -qam edit2
+  out=$(scope diff-state "$state" branch | cut -f1,3 | sort | tr '\n' ' ')
+  assert_eq "dup: editing the second copy marks only it changed" "changed	c2 same	c1 " "$out"
+}
+
+test_git_config_prefixes() {
+  new_repo
+  git checkout -qb feat
+  mkdir -p src && printf 'x\n' > src/x.txt && git add -A && git commit -qm x
+  cd src || exit 1
+  local out
+  out=$(GIT_CONFIG_COUNT=2 GIT_CONFIG_KEY_0=diff.noprefix GIT_CONFIG_VALUE_0=true \
+    GIT_CONFIG_KEY_1=diff.relative GIT_CONFIG_VALUE_1=true scope hunks branch | field 2)
+  assert_eq "config: diff.noprefix and diff.relative do not change paths" "src/x.txt" "$out"
+}
+
+test_subdirectory() {
+  new_repo
+  mkdir -p src/sub
+  printf 'here\n' > src/sub/here.txt
+  printf 'root\n' > root.txt
+  cd src/sub || exit 1
+  assert_eq "subdir: uncommitted covers the whole repo with root paths" "root.txt src/sub/here.txt " "$(scope hunks uncommitted | field 2 | sort | tr '\n' ' ')"
+  assert_eq "subdir: files paths are relative to the current directory" "src/sub/here.txt" "$(scope hunks files here.txt | field 2)"
+  assert_contains "subdir: meta prints the repo root" "root=$(git rev-parse --show-toplevel)" "$(scope meta uncommitted)"
+}
+
+test_hunks_quoted_path_with_space() {
+  new_repo
+  git checkout -qb feat
+  printf 'x\n' > 'we"ird and name.txt' && git add -A && git commit -qm q
+  assert_eq "hunks: quoted path with a space" 'we"ird and name.txt' "$(scope hunks branch | field 2)"
+}
+
+test_diff_state_skips_noise() {
+  new_repo
+  git checkout -qb feat
+  sed 's/^c$/C/' app.txt > t && mv t app.txt
+  printf '{}\n' > package-lock.json && git add -A && git commit -qm mix
+  local state="$REPO/.state.tsv"
+  scope hunks branch | awk -F'\t' -v OFS='\t' '$6 == "-" { print $1, "c1", $2, $3 }' > "$state"
+  assert_eq "diff-state: noise hunks are not reported" "same	c1 " "$(scope diff-state "$state" branch | cut -f1,3 | tr '\n' ' ')"
 }
 
 # --- runner ---
