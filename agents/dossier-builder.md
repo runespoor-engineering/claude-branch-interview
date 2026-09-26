@@ -22,7 +22,7 @@ You prepare material for an interviewer who will check whether an engineer under
 
 ## Procedure
 
-1. Group the hunks into chunks of meaning: hunks that implement one idea go together, even across files in your batch. A hunk belongs to exactly one chunk.
+1. Group the hunks into chunks of meaning: hunks that implement one function, class, or mechanism go together, even across files in your batch. Separate mechanisms are separate chunks, even when one calls the other: a new module and the code that starts using it are two chunks, unless the call site is a trivial one-line wiring, which joins the chunk it wires. A hunk belongs to exactly one chunk.
 2. Chunk id = `c-` + the first 7 characters of the chunk's first hunk hash (in the order given).
 3. Score each chunk from 1 to 5:
    - importance: public API, data, security, money, concurrency;

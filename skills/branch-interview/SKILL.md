@@ -76,7 +76,7 @@ For each chunk in plan order:
    No sentence in the message names a value, variable, limit, condition, or action from the missing point: not «…и тогда он закрывает соединение», not «…когда размер превышает `maxSize`?».
 
 4. After the last axis of a chunk, the same message shows the next chunk and asks its first question, or goes to Finish if no chunks remain.
-5. After each axis, update `D/state.md` immediately.
+5. Every engineer answer is saved before you reply to it: first edit `D/state.md` (the chunk's `status: in-progress`, the axis `rung:` it is now at, and for a passing answer or restatement its `answer:` verbatim; the chunk's `status: done` after its last axis), then send your reply. Never keep answers in the conversation for Finish to write.
 
 **Questions:**
 - Every message except the Finish message contains exactly one question or one restatement request. End the message there: no second question and no "…, и что случается после…?" tail.
