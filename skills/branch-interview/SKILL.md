@@ -62,30 +62,31 @@ For each chunk in plan order:
    Stop the ladder at the first passing answer. The axis status is that rung.
 
    **Pass bar.** The answer states nothing wrong about the code, and:
-   - on what and why: it covers every key point;
+   - on what and why: it covers every key point, or gives a different intent that is consistent with the code (see Grading);
    - on alternatives and weaknesses: it covers more than half of the key points (2 of 3, 3 of 4, 3 of 5).
 
-   Any other answer is partial and goes to the next rung. "I don't know" goes to the next rung.
+   Any other answer, including "I don't know", is partial and goes to the next rung.
 
-   **Reply to a passing alternatives or weaknesses answer:** one short acknowledgement; then each key point they did not name, as a statement with its `file:line` when there is one ("Ещё: кэш не сбрасывается при смене пользователя — src/cache.ts:40."); then the next axis's question, or nothing if this was the last axis. The unnamed points are information, never a question.
+   **Reply to a passing alternatives or weaknesses answer:** one short acknowledgement; then each key point they did not name (after weaknesses, also each dossier finding they did not name), as a statement with its `file:line` when there is one ("Ещё: кэш не сбрасывается при смене пользователя — src/cache.ts:40."); then the next question (see step 4). The unnamed points are information, never a question, and no rewrite is required.
 
    **Reply to a partial answer:**
-   1. One sentence naming which key point is missing or wrong, by its topic only, in words the engineer or the axis question already used ("Не хватает, что происходит при пустом списке.").
-   2. One question for the next rung, one sentence with one question mark. At rung 1 it is about the missing or wrong point; when the dossier's rung 1 question is about a point the engineer already named correctly, write your own. Ask what happens in a situation; do not name the outcome.
+   1. One sentence saying which part is missing or wrong, using only the axis question's own words: «Не хватает ответа на „<words from the axis question>“.»
+   2. One question for the next rung. At rung 1 it is about the missing or wrong point; when the dossier's rung 1 question is about a point the engineer already named correctly, write your own. Describe a situation that leaves the missing condition and outcome unnamed: «Что происходит, если очередь всё время пуста?»
 
-   Neither the sentence nor the question names a value, variable, condition, or action from the missing point: not "…и пробрасывает ошибку дальше", not "…больше `retries` раз?".
+   No sentence in the message names a value, variable, limit, condition, or action from the missing point: not «…и тогда он закрывает соединение», not «…когда размер превышает `maxSize`?».
 
-4. After the weaknesses axis, tell the engineer the dossier's findings they did not name, as information. Do not require a rewrite.
+4. After the last axis of a chunk, the same message shows the next chunk and asks its first question, or goes to Finish if no chunks remain.
 5. After each axis, update `D/state.md` immediately.
 
 **Questions:**
-- A message has at most one question, about one point. End the message at that question mark: no second question and no "…, и что случается после…?" tail.
+- Every message contains exactly one question. End the message at that question mark: no second question and no "…, и что случается после…?" tail.
+- A question taken verbatim from the dossier counts as one question, even when it has two parts. Every question you write yourself is about one point.
 - A question never contains its answer.
-- No yes/no questions, and no "is it right that…" / "правильно ли, что…". Ask what, why, how, or what happens when.
-- "Yes, I agree" / "да, согласен" in reply to an explanation is not a restatement. Ask again for the restatement in their own words.
+- No yes/no questions, and no "is it right that…" / "правильно ли, что…".
+- "Yes, I agree" / "да, согласен" in reply to an explanation is not a restatement; ask for the restatement again.
 
 **Commands** (accept them in either language):
-- `explain` / `объясни`, and any request to be told the answer ("just tell me the answer", "просто скажи правильный ответ"): give the full rung 3 explanation now, whatever rung you are on, with every key point stated and none held back as a question. Then ask them to restate the whole explanation in their own words (not a new question about one part of it). The restatement is still required.
+- `explain` / `объясни`, and any request to be told the answer ("just tell me the answer", "просто скажи правильный ответ"): give the whole rung 3 explanation now, whatever the rung, holding nothing back as a question; then ask them to restate all of it in their own words.
 - `skip` / `пропусти`: mark the current axis, or the whole chunk if said at its start, as skipped.
 - `stop` / `хватит`: go to Finish.
 
@@ -100,11 +101,11 @@ These replies mean you are breaking the interview. Rewrite before sending.
 
 | You are about to | Instead |
 |------------------|---------|
-| send the rung 2 pointer after "I don't know" at rung 0 ("посмотри commit message… `git log -1 --format=%B -- src/retry.js`") | ask the rung 1 leading question; rungs go one at a time, never skipped or bundled |
-| refuse the answer, or send the next rung's hint, when the engineer asks for it ("правильный ответ должен прийти от тебя", "Смотри коммит-сообщение… `git log`" after "просто скажи ответ") | treat it as `explain`: give the rung 3 explanation now, then ask for the restatement; the restatement is still required |
-| state the correct answer while pointing out a mistake ("формула — `Math.random() * baseMs * 2 ** attempt`") | say the answer is wrong, name which point is wrong without its content, then ask the rung 1 question |
-| ask the engineer to prove their intent against the commit or dossier ("Можешь подтвердить это по коммит-сообщению?", "в досье 503, а не 429") | if the code is consistent with their answer, pass the axis, say it differs from the dossier and will be recorded, then ask the next axis's question |
-| ask a leading question about a weakness the engineer missed after they named more than half ("есть ли у неё верхняя граница?", "Не хватает ещё одного: что будет с задержкой при большом значении `retries`?") | pass the axis if it meets the pass bar, then state the missed finding as information, with its `file:line` |
+| send the rung 2 pointer after "I don't know" at rung 0 ("посмотри commit message… `git log`") | ask the rung 1 leading question; rungs go one at a time, never skipped or bundled |
+| refuse the answer, or send the next rung's hint, when the engineer asks for it ("правильный ответ должен прийти от тебя", "Смотри коммит-сообщение… `git log`" after "просто скажи ответ") | treat it as `explain` |
+| put the missing point into the hint ("Что случается, когда `attempt` превышает `retries`?", "Что случается, когда число неудачных попыток превышает `retries`?") | name only the axis question's words, and ask about a situation that leaves the condition unnamed |
+| ask the engineer to prove their intent against the commit or dossier ("Можешь подтвердить это по коммит-сообщению?", "в досье 503, а не 429") | pass the axis by the pass bar; say it differs from the dossier and will be recorded |
+| ask a leading question about a weakness the engineer missed after they named more than half ("есть ли у неё верхняя граница?", "Не хватает ещё одного: что будет с задержкой при большом значении `retries`?") | pass the axis and state the missed point as information |
 | keep probing an axis that already passed ("Уточни: если задать `retries: 10`…" after a correct "what") | one short neutral sentence, then the next axis's question |
 
 ## State file
@@ -140,5 +141,5 @@ Chunks appear in plan order. Tail chunks carry `tail: true`.
 ## Finish
 
 1. Run `SCOPE diff-state D/hunks.tsv <mode> [paths]`. Mark chunks with `changed` hunks as "changed after review".
-2. Write `docs/interviews/<key>.md` from `<this skill's base directory>/report-template.md`, rebuilt from the whole `state.md`. Chunks not finished are listed as not reviewed.
+2. Write `docs/interviews/<key>.md` from `<this skill's base directory>/report-template.md`, rebuilt from the whole `state.md`.
 3. Tell the engineer the report path and that committing it is up to them: `git add docs/interviews/<key>.md`.
