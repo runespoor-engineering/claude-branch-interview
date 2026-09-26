@@ -40,7 +40,7 @@ You interview the engineer about their own change until they show they own it. Y
    <the batch's hunk rows>
    ```
 
-   Parse the reply lines up to `END`. If an agent fails or its reply does not parse, retry that batch once. If it fails again, write those dossiers yourself in the format from `<this skill's base directory>/../../agents/dossier-builder.md` and mark them `dossier: main-session` in `state.md`.
+   Parse the reply lines up to `END`. If an agent fails or its reply does not parse, run that batch once more. If it fails again, write those dossiers yourself in the format from `<this skill's base directory>/../../agents/dossier-builder.md` and mark them `dossier: main-session` in `state.md`.
 8. **Save.** Write `D/hunks.tsv` (`hunk_hash<TAB>chunk_id<TAB>file<TAB>lines`, one row per non-noise hunk) and `D/state.md` (format below).
 9. **Plan.** Rank chunks by the sum of their three scores. Show a numbered list: `file:lines — reason`. Put chunks with a sum of 4 or less in one collapsed line at the end, and noise in another. Ask the engineer to drop or add chunks. For an added `file:lines`, dispatch one dossier-builder with the matching hunk rows. There is no limit on the number of chunks.
 
@@ -65,7 +65,7 @@ For each chunk in plan order:
    - on what and why: it covers every key point, or gives a different intent that is consistent with the code (see Grading);
    - on alternatives and weaknesses: it covers more than half of the key points (2 of 3, 3 of 4, 3 of 5).
 
-   Any other answer, including "I don't know", is partial and goes to the next rung.
+   A correct point stated with a hedge ("I think", "кажется", "not sure") counts as named. Any other answer, including "I don't know", is partial and goes to the next rung.
 
    **Reply to a passing alternatives or weaknesses answer:** one short acknowledgement; then each key point they did not name (after weaknesses, also each dossier finding they did not name), as a statement with its `file:line` when there is one ("Ещё: кэш не сбрасывается при смене пользователя — src/cache.ts:40."); then the next question (see step 4). The unnamed points are information, never a question, and no rewrite is required.
 
@@ -79,14 +79,14 @@ For each chunk in plan order:
 5. After each axis, update `D/state.md` immediately.
 
 **Questions:**
-- Every message contains exactly one question. End the message at that question mark: no second question and no "…, и что случается после…?" tail.
+- Every message except the Finish message contains exactly one question or one restatement request. End the message there: no second question and no "…, и что случается после…?" tail.
 - A question taken verbatim from the dossier counts as one question, even when it has two parts. Every question you write yourself is about one point.
 - A question never contains its answer.
-- No yes/no questions, and no "is it right that…" / "правильно ли, что…".
-- "Yes, I agree" / "да, согласен" in reply to an explanation is not a restatement; ask for the restatement again.
+- No yes/no questions, and no "is it right that…" / "правильно ли, что…". Ask what, why, how, or what happens when.
+- "Yes, I agree" / "да, согласен" in reply to an explanation is not a restatement. Send one request to restate the whole explanation in their own words, not a new question about one part of it: «Это не пересказ. Перескажи всё объяснение своими словами.»
 
 **Commands** (accept them in either language):
-- `explain` / `объясни`, and any request to be told the answer ("just tell me the answer", "просто скажи правильный ответ"): give the whole rung 3 explanation now, whatever the rung, holding nothing back as a question; then ask them to restate all of it in their own words.
+- `explain` / `объясни`, and any request to be told the answer ("just tell me the answer", "просто скажи правильный ответ"): give the whole rung 3 explanation now, whatever the rung, holding nothing back as a question; then ask them to restate all of it in their own words (not a new question about one part of it).
 - `skip` / `пропусти`: mark the current axis, or the whole chunk if said at its start, as skipped.
 - `stop` / `хватит`: go to Finish.
 
@@ -101,12 +101,12 @@ These replies mean you are breaking the interview. Rewrite before sending.
 
 | You are about to | Instead |
 |------------------|---------|
-| send the rung 2 pointer after "I don't know" at rung 0 ("посмотри commit message… `git log`") | ask the rung 1 leading question; rungs go one at a time, never skipped or bundled |
-| refuse the answer, or send the next rung's hint, when the engineer asks for it ("правильный ответ должен прийти от тебя", "Смотри коммит-сообщение… `git log`" after "просто скажи ответ") | treat it as `explain` |
-| put the missing point into the hint ("Что случается, когда `attempt` превышает `retries`?", "Что случается, когда число неудачных попыток превышает `retries`?") | name only the axis question's words, and ask about a situation that leaves the condition unnamed |
-| ask the engineer to prove their intent against the commit or dossier ("Можешь подтвердить это по коммит-сообщению?", "в досье 503, а не 429") | pass the axis by the pass bar; say it differs from the dossier and will be recorded |
-| ask a leading question about a weakness the engineer missed after they named more than half ("есть ли у неё верхняя граница?", "Не хватает ещё одного: что будет с задержкой при большом значении `retries`?") | pass the axis and state the missed point as information |
-| keep probing an axis that already passed ("Уточни: если задать `retries: 10`…" after a correct "what") | one short neutral sentence, then the next axis's question |
+| send the rung 2 pointer after "I don't know" at rung 0 ("посмотри описание PR, где добавлен кэш") | ask the rung 1 leading question; rungs go one at a time, never skipped or bundled |
+| refuse the answer, or send the next rung's hint, when the engineer asks for it ("правильный ответ должен прийти от тебя", "Посмотри описание PR…" after "просто скажи ответ") | treat it as `explain` |
+| put the missing point into the hint ("Что случается, когда `page` превышает `maxPages`?", "Что случается, когда число записей превышает `limit`?") | name only the axis question's words, and ask about a situation that leaves the condition unnamed |
+| ask the engineer to prove their intent against the commit or dossier ("Можешь подтвердить это по описанию PR?", "в досье сказано про нехватку памяти, а не про устаревшие данные") | pass the axis by the pass bar; say it differs from the dossier and will be recorded |
+| ask a leading question about a weakness the engineer missed after they named more than half ("есть ли у кэша лимит размера?", "Не хватает ещё одного: что будет с памятью при большом `ttl`?") | pass the axis and state the missed point as information |
+| keep probing an axis that already passed ("Уточни: если задать `pageSize: 1000`…" after a correct "what") | one short neutral sentence, then the next axis's question |
 
 ## State file
 
@@ -115,16 +115,16 @@ These replies mean you are breaking the interview. Rewrite before sending.
 ```markdown
 ---
 language: ru
-key: feat-retry
+key: feat-cache
 mode: branch
 paths:
 base_sha: <sha>
 head_sha: <sha>
 updated: <ISO 8601 time>
 ---
-## c-cdf1b88 · src/retry.js:1-18
+## c-4a1e9f0 · src/cache.js:10-42
 scores: importance 4 · complexity 3 · doubt 5
-reason: doubt — delay has no upper bound
+reason: doubt — entries are never evicted
 status: not-reviewed | in-progress | done | skipped | changed
 dossier: agent | main-session
 disagreement: <one line, or empty>
