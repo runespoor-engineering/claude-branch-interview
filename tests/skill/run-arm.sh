@@ -83,6 +83,8 @@ command -v claude >/dev/null 2>&1 || {
 }
 
 mkdir -p "$out_dir"
+# Resolve to an absolute path now: the samples run after a cd into work_dir.
+out_dir=$(cd "$out_dir" && pwd)
 
 # --- build a fresh fixture repo and grab the code shown to the engineer ---
 fixture_parent=$(mktemp -d)
@@ -191,5 +193,16 @@ while [ "$rep" -le "$reps" ]; do
 
   rep=$((batch_end + 1))
 done
+
+missing=""
+k=1
+while [ "$k" -le "$reps" ]; do
+  [ -s "$out_dir/${scenario_name}-${k}.txt" ] || missing="$missing ${scenario_name}-${k}.txt"
+  k=$((k + 1))
+done
+if [ -n "$missing" ]; then
+  echo "run-arm.sh: missing or empty replies in $out_dir:$missing" >&2
+  exit 1
+fi
 
 echo "run-arm.sh: wrote $reps ${arm} replies for $scenario_name to $out_dir"

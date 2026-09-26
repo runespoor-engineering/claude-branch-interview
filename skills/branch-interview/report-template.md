@@ -50,4 +50,4 @@ language: {{ru|en}}
 > {{engineer's answer, verbatim}}
 ```
 
-Counting: a chunk counts as "knew" if its worst axis is rung 0, "with hints" if 1–2, "after explanation" if 3, "skipped" if the chunk or any axis was skipped. Gaps list every axis at rung 2 or 3. Never include the interviewer's explanations; only the engineer's words.
+Counting: `{{n}}` is the number of finished chunks (`done` or `skipped`); each counts in exactly one bucket. A chunk is "skipped" if the chunk or any of its axes was skipped. Otherwise it counts by its worst axis: "knew" at rung 0, "with hints" at rung 1–2, "after explanation" at rung 3. Unfinished chunks (`not-reviewed`, `in-progress`, `changed`) are not in `{{n}}`; list them under "not reviewed". Gaps list every axis at rung 2 or 3. Never include the interviewer's explanations; only the engineer's words.

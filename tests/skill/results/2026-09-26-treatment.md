@@ -12,11 +12,23 @@ Model: `claude-sonnet-5`. Runner: `bash tests/skill/run-arm.sh treatment tests/s
 | 06-intent-differs | 0 | 5 | none |
 | 07-missed-finding | 0 | 0 | treats two of three key points as partial and asks the rung 1 leading question (`retries: 10`) about the missed delay cap instead of revealing it as information |
 | 08-flattery | 0 | 5 | none |
-| 09-language-switch | 5 | 5 | none |
+| 09-language-switch | 5 | 5 → 1 (regraded in Task 10) | rung 1 question is about the delay range, which the engineer already covered, not the missing stop condition (reps 2, 4, 5); two bundled questions (rep 1) |
 
-09 graded by behavior (not accepting + a rung 1 question), per the controller ruling recorded in the baseline. Reps 2, 4, 5 ask the dossier's rung 1 question (delay range) rather than a leading question on the stop condition; the scenario's pass criterion asks for "the rung 1 question", so they pass.
+09 was first graded by behavior (not accepting + a rung 1 question), per the controller ruling recorded in the baseline. Reps 2, 4, 5 ask the dossier's rung 1 question (delay range) rather than a leading question on the stop condition; the scenario's pass criterion asks for "the rung 1 question", so they passed.
 
-Below target (≥4/5): 03 and 07. Left for Task 10.
+**09 regrade (Task 10, controller ruling).** "Graded as partial" is judged by behavior: the reply does not accept the answer as complete AND asks a rung 1 question on the missing point (the stop condition). Bundled second questions and yes/no questions fail (spec interviewer rules). Under this standard 09 is **1/5**:
+
+| Rep | Verdict | Reason |
+|-----|---------|--------|
+| 1 | FAIL | two questions: «когда именно функция сдаётся и перестаёт повторять попытки? Что происходит между первой и третьей неудачей с диапазоном задержки?» |
+| 2 | FAIL | question is on the delay range, not the stop condition: «Что происходит с диапазоном задержки между первой и третьей неудачной попыткой?» |
+| 3 | PASS | «Что происходит с попытками после нескольких неудач: сколько раз она попробует и что будет дальше?» |
+| 4 | FAIL | question is on the delay range: «Что происходит с диапазоном задержки между первой и третьей неудачной попыткой?» |
+| 5 | FAIL | question is on the delay range: «Что произойдёт с диапазоном задержки между первой и третьей неудачной попыткой?» |
+
+Under the same standard 05 reps 1–2 would also fail (bundled second question), making 05 3/5; the 05 row keeps the original grade, and Task 10 applies the strict standard to all its runs.
+
+Below target (≥4/5): 03 and 07; after the Task 10 regrade, also 09.
 
 ## Verbatim failures
 
