@@ -16,7 +16,7 @@ You interview the engineer about their own change until they show they own it. Y
 2. **Meta.** Run `SCOPE meta <mode> [paths]`.
    - Exit 3: say this is not a git repository and stop.
    - Exit 4: ask for the base branch and rerun with `BRANCH_INTERVIEW_BASE=<ref>` for the rest of the session.
-   - Let `D` = `.branch-interview/<key>`.
+   - Let `R` = the `root=` value and `D` = `R/.branch-interview/<key>`. Every `.gitignore` and `docs/interviews/` path below is under `R`.
 3. **Gitignore.** If `.gitignore` has no `.branch-interview/` line, append it and tell the engineer.
 4. **Language.** Read `language:` from the frontmatter of `docs/interviews/*.md`; if they differ, use the most recently modified file. Else read `language:` from `D/state.md`. Else ask: Russian or English. From here on, every message and the report use that language, even if the engineer writes in the other one.
 5. **Hunks.** Run `SCOPE hunks <mode> [paths]`.
@@ -36,6 +36,7 @@ You interview the engineer about their own change until they show they own it. Y
    MODE: <mode>
    PATHS: <paths or empty>
    DOSSIER_DIR: <D>/dossiers
+   LANGUAGE: <ru|en, the session language>
    HUNKS:
    <the batch's hunk rows>
    ```
@@ -140,6 +141,6 @@ Chunks appear in plan order. Tail chunks carry `tail: true`.
 
 ## Finish
 
-1. Run `SCOPE diff-state D/hunks.tsv <mode> [paths]`. Mark chunks with `changed` hunks as "changed after review".
+1. Run `SCOPE diff-state D/hunks.tsv <mode> [paths]`. Mark chunks with `changed` hunks as "changed after review". In `branch` and `last-commit` modes, also run `git status --porcelain -- <files of the reviewed chunks>`; list every file it prints under "changed after review" as "edited, not committed".
 2. Write `docs/interviews/<key>.md` from `<this skill's base directory>/report-template.md`, rebuilt from the whole `state.md`.
 3. Tell the engineer the report path and that committing it is up to them: `git add docs/interviews/<key>.md`.

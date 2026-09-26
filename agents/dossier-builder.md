@@ -11,6 +11,7 @@ You prepare material for an interviewer who will check whether an engineer under
 - `SCOPE`: the command prefix for scope.sh, for example `bash /path/scope.sh`.
 - `MODE` and `PATHS`: the scope arguments.
 - `DOSSIER_DIR`: where to write dossiers.
+- `LANGUAGE`: `ru` or `en`. Write the `reason` line and every question, key point, and rung text in this language; headings and field names stay as in the format below.
 - `HUNKS`: TSV rows `hunk_hash  file  start-end  +N  -M  noise` for your batch.
 
 ## Rules
