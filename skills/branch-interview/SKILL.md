@@ -1,7 +1,7 @@
 ---
 name: branch-interview
 description: Use when an engineer wants to check that they understand and own the code in their branch, last commit, uncommitted changes, or chosen files before pushing or opening a PR — "grill me on my branch", "прожарка", ownership check, self-review of AI-written code.
-argument-hint: "[branch | last-commit | uncommitted | files <path>...]"
+argument-hint: "[branch | last-commit | uncommitted | files <path>...] [--inline]"
 ---
 
 # Branch Interview
@@ -13,6 +13,7 @@ You interview the engineer about their own change until they show they own it. Y
 ## Setup
 
 1. **Mode.** Take the mode from the arguments: `branch`, `last-commit`, `uncommitted`, or `files <path>...`. If there is none, ask which of the four to use.
+   **Dossier mode.** `--inline` in the arguments (anywhere, never a path) means `inline`: you build dossiers yourself and never dispatch an agent. Otherwise it is `agents`. On resume without `--inline`, use the `dossiers:` value from `D/state.md`.
 2. **Meta.** Run `SCOPE meta <mode> [paths]`.
    - Exit 3: say this is not a git repository and stop.
    - Exit 4: ask for the base branch and rerun with `BRANCH_INTERVIEW_BASE=<ref>` for the rest of the session.
@@ -29,7 +30,9 @@ You interview the engineer about their own change until they show they own it. Y
    - `new`: send to dossier building.
    - `removed`: drop the hunk; drop a chunk with no hunks left.
    Ask: continue, or start over. If `state.md` cannot be parsed (no frontmatter or no `## c-` headings), offer to start over and move it to `state.md.bak`.
-7. **Dossiers.** Take the hunks to analyze (all non-noise hunks on a new session; `new` and `changed` ones on resume). Group them by top-level directory into batches of at most 400 changed lines. Dispatch `branch-interview:dossier-builder` for each batch, at most 5 in parallel, with this prompt:
+7. **Dossiers.** Take the hunks to analyze (all non-noise hunks on a new session; `new` and `changed` ones on resume). Group them by top-level directory into batches of at most 400 changed lines.
+
+   **`agents` mode:** dispatch `branch-interview:dossier-builder` for each batch, at most 5 in parallel, with this prompt:
 
    ```
    SCOPE: <SCOPE>
@@ -42,6 +45,9 @@ You interview the engineer about their own change until they show they own it. Y
    ```
 
    Parse the reply lines up to `END`. If an agent fails or its reply does not parse, run that batch once more. If it fails again, write those dossiers yourself in the format from `<this skill's base directory>/../../agents/dossier-builder.md` and mark them `dossier: main-session` in `state.md`.
+
+   **`inline` mode:** do not dispatch any agent. If the non-noise hunks add up to more than 1000 changed lines, say that inline mode will fill this session's context and offer `agents` mode once; keep `inline` unless the engineer switches. Then, batch by batch, read `<this skill's base directory>/../../agents/dossier-builder.md` and follow its Rules and Procedure yourself with the same inputs, writing each dossier to `D/dossiers/<chunk_id>.md`; mark every chunk `dossier: main-session` in `state.md`. The dossier text stays private: never show or quote it to the engineer.
+
 8. **Save.** Write `D/hunks.tsv` (`hunk_hash<TAB>chunk_id<TAB>file<TAB>lines`, one row per non-noise hunk) and `D/state.md` (format below).
 9. **Plan.** Rank chunks by the sum of their three scores. Show a numbered list: `file:lines — reason`. Put chunks with a sum of 4 or less in one collapsed line at the end, and noise in another. Ask the engineer to drop or add chunks. For an added `file:lines`, dispatch one dossier-builder with the matching hunk rows. There is no limit on the number of chunks.
 
@@ -119,6 +125,7 @@ language: ru
 key: feat-cache
 mode: branch
 paths:
+dossiers: agents | inline
 base_sha: <sha>
 head_sha: <sha>
 updated: <ISO 8601 time>

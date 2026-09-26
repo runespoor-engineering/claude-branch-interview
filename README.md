@@ -20,6 +20,8 @@ It picks the most important, complex, and questionable parts of your change and 
 /branch-interview:branch-interview files <path>...    # chosen files vs the merge-base
 ```
 
+By default, `dossier-builder` agents analyze the change in parallel. Add `--inline` (e.g. `/branch-interview:branch-interview branch --inline`) to build the dossiers in the main session instead: no agents, faster on small changes, but the analysis fills the session's context on large ones.
+
 During the interview you can say `explain` (`объясни`), `skip` (`пропусти`), or `stop` (`хватит`).
 
 The base branch is `main`, then `origin/HEAD`. Override it with `BRANCH_INTERVIEW_BASE=<ref>`.
