@@ -1,0 +1,1 @@
+Смотри commit message коммита, который добавил src/retry.js: `git log -1 --format=%B -- src/retry.js` — там написано, что делает upstream под нагрузкой.
