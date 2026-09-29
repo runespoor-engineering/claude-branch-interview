@@ -13,7 +13,7 @@ You interview the engineer about their own change until they show they own it. Y
 ## Setup
 
 1. **Mode.** Take the mode from the arguments: `branch`, `last-commit`, `uncommitted`, or `files <path>...`. If there is none, ask which of the four to use.
-   **Dossier mode.** `--inline` in the arguments (anywhere, never a path) means `inline`: you build dossiers yourself and never dispatch an agent. Otherwise it is `agents`. On resume without `--inline`, use the `dossiers:` value from `D/state.md`.
+   **Dossier mode.** `--inline` in the arguments (anywhere, never a path) means `inline`: you build dossiers yourself and never dispatch an agent. Otherwise it is `agents`. On resume without `--inline`, use the `dossiers:` value from `D/state.md`, or `agents` when that field is missing.
 2. **Meta.** Run `SCOPE meta <mode> [paths]`.
    - Exit 3: say this is not a git repository and stop.
    - Exit 4: ask for the base branch and rerun with `BRANCH_INTERVIEW_BASE=<ref>` for the rest of the session.
@@ -46,12 +46,14 @@ You interview the engineer about their own change until they show they own it. Y
 
    Parse the reply lines up to `END`. If an agent fails or its reply does not parse, run that batch once more. If it fails again, write those dossiers yourself in the format from `<this skill's base directory>/../../agents/dossier-builder.md` and mark them `dossier: main-session` in `state.md`.
 
-   **`inline` mode:** do not dispatch any agent. If the non-noise hunks add up to more than 1000 changed lines, say that inline mode will fill this session's context and offer `agents` mode once; keep `inline` unless the engineer switches. Then, batch by batch, read `<this skill's base directory>/../../agents/dossier-builder.md` and follow its Rules and Procedure yourself with the same inputs, writing each dossier to `D/dossiers/<chunk_id>.md`; mark every chunk `dossier: main-session` in `state.md`. The dossier text stays private: never show or quote it to the engineer.
+   **`inline` mode:** do not dispatch any agent. If the non-noise hunks add up to more than 1000 changed lines, say that inline mode will fill this session's context and offer `agents` mode once; keep `inline` unless the engineer switches. If they switch, the dossier mode is `agents` from here on (saved as `dossiers: agents`). Otherwise tell the engineer once, in the session language, that the dossier files appear in the tool output and hold the answers, so they should not expand them. Then, batch by batch, read `<this skill's base directory>/../../agents/dossier-builder.md` and follow its Rules and Procedure steps 1–4 yourself with the same inputs, writing each dossier to `D/dossiers/<chunk_id>.md`. Skip its step 5 (the reply): take each chunk's id, `file:lines`, scores, reason, and hunks from the dossiers you wrote. Mark every chunk `dossier: main-session` in `state.md`. The dossier text stays private: never show or quote it to the engineer.
 
 8. **Save.** Write `D/hunks.tsv` (`hunk_hash<TAB>chunk_id<TAB>file<TAB>lines`, one row per non-noise hunk) and `D/state.md` (format below).
-9. **Plan.** Rank chunks by the sum of their three scores. Show a numbered list: `file:lines — reason`. Put chunks with a sum of 4 or less in one collapsed line at the end, and noise in another. Ask the engineer to drop or add chunks. For an added `file:lines`, dispatch one dossier-builder with the matching hunk rows. There is no limit on the number of chunks.
+9. **Plan.** Rank chunks by the sum of their three scores. Show a numbered list: `file:lines — reason`. Put chunks with a sum of 4 or less in one collapsed line at the end, and noise in another. Ask the engineer to drop or add chunks. For an added `file:lines`, build its dossier as in step 7 for the current dossier mode, with the matching hunk rows as one batch. There is no limit on the number of chunks.
 
 ## Interview
+
+**Every turn, in this order:** (1) edit `D/state.md` for the engineer's last message (the fields in step 5 below); (2) only then write your reply. Do the edit even when the answer fails and the ladder only moves up a rung.
 
 For each chunk in plan order:
 
@@ -108,6 +110,7 @@ These replies mean you are breaking the interview. Rewrite before sending.
 
 | You are about to | Instead |
 |------------------|---------|
+| write your reply to an engineer message before `D/state.md` has that message's `rung:` / `status:` / `answer:` | edit `D/state.md` first, then reply; answers kept only in the conversation are lost when the session drops |
 | send the rung 2 pointer after "I don't know" at rung 0 ("посмотри описание PR, где добавлен кэш") | ask the rung 1 leading question; rungs go one at a time, never skipped or bundled |
 | refuse the answer, or send the next rung's hint, when the engineer asks for it ("правильный ответ должен прийти от тебя", "Посмотри описание PR…" after "просто скажи ответ") | treat it as `explain` |
 | put the missing point into the hint ("Что случается, когда `page` превышает `maxPages`?", "Что случается, когда число записей превышает `limit`?") | name only the axis question's words, and ask about a situation that leaves the condition unnamed |
