@@ -1,0 +1,12 @@
+{
+  "name": "branch-interview",
+  "description": "Interviews an engineer about the code in their branch until they show they own it.",
+  "version": "0.1.0",
+  "author": {
+    "name": "BorysShulyak"
+  },
+  "homepage": "https://github.com/BorysShulyak/claude-branch-interview",
+  "repository": "https://github.com/BorysShulyak/claude-branch-interview",
+  "license": "MIT",
+  "keywords": ["code-review", "ownership", "interview", "git", "branch"]
+}

@@ -1,0 +1,18 @@
+{
+  "name": "claude-branch-interview",
+  "description": "Marketplace for the branch-interview plugin",
+  "owner": {
+    "name": "BorysShulyak"
+  },
+  "plugins": [
+    {
+      "name": "branch-interview",
+      "description": "Interviews an engineer about the code in their branch until they show they own it.",
+      "version": "0.1.0",
+      "source": "./",
+      "author": {
+        "name": "BorysShulyak"
+      }
+    }
+  ]
+}

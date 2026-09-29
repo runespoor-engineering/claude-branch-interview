@@ -1,0 +1,1 @@
+Смотри сообщение коммита, который добавил src/retry.js: `git log -1 --format=%B -- src/retry.js`.
