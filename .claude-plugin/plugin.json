@@ -5,8 +5,8 @@
   "author": {
     "name": "BorysShulyak"
   },
-  "homepage": "https://github.com/BorysShulyak/claude-branch-interview",
-  "repository": "https://github.com/BorysShulyak/claude-branch-interview",
+  "homepage": "https://github.com/runespoor-engineering/claude-branch-interview",
+  "repository": "https://github.com/runespoor-engineering/claude-branch-interview",
   "license": "MIT",
   "keywords": ["code-review", "ownership", "interview", "git", "branch"]
 }

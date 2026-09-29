@@ -19,9 +19,11 @@ For the full design, see [docs/how-it-works.md](docs/how-it-works.md).
 ## Install
 
 ```
-/plugin marketplace add BorysShulyak/claude-branch-interview
-/plugin install branch-interview@claude-branch-interview
+/plugin marketplace add runespoor-engineering/claude-plugins
+/plugin install branch-interview@runespoor
 ```
+
+The plugin is listed in the [runespoor marketplace](https://github.com/runespoor-engineering/claude-plugins). To update, run `/plugin marketplace update runespoor`.
 
 ## Use
 
