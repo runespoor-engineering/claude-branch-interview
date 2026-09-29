@@ -300,7 +300,8 @@ cmd_show() {
   local want=$1 hf
   shift
   scratch
-  hf=$(hunk_hashes "$@" | awk -F'\t' -v w="$want" '$1 == w { print $2; exit }')
+  # awk reads to the end: exiting early would SIGPIPE hunk_hashes under pipefail.
+  hf=$(hunk_hashes "$@" | awk -F'\t' -v w="$want" '$1 == w && hf == "" { hf = $2 } END { if (hf != "") print hf }')
   [ -n "$hf" ] || die 5 "hunk $want not found in scope"
   tail -n +3 "$hf"
 }

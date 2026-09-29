@@ -304,6 +304,18 @@ test_show() {
   assert_eq "show: unknown hash exits 5" "5" "$?"
 }
 
+test_show_not_last_hunk() {
+  new_repo
+  git checkout -qb feat
+  printf 'one\n' > a.txt && printf 'two\n' > b.txt && printf 'three\n' > c.txt
+  git add -A && git commit -qm three
+  local h out
+  h=$(scope hunks branch | sed -n 1p | field 1)
+  out=$(scope show "$h" branch 2>&1)
+  assert_eq "show: first of several hunks exits 0" "0" "$?"
+  assert_eq "show: first of several hunks prints its lines" "+one" "$out"
+}
+
 test_dup_hunks() {
   new_repo
   git checkout -qb feat
