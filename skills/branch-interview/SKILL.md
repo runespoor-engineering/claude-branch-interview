@@ -20,17 +20,17 @@ You interview the engineer about their own change until they show they own it. Y
    - Let `R` = the `root=` value and `D` = `R/.branch-interview/<key>`. Every `.gitignore` and `docs/interviews/` path below is under `R`.
 3. **Gitignore.** If `.gitignore` has no `.branch-interview/` line, append it and tell the engineer.
 4. **Language.** Read `language:` from the frontmatter of `docs/interviews/*.md`; if they differ, use the most recently modified file. Else read `language:` from `D/state.md`. Else ask: Russian or English. From here on, every message and the report use that language, even if the engineer writes in the other one.
-5. **Hunks.** Run `SCOPE hunks <mode> [paths]`.
-   - No rows: say the scope has no changes and stop.
-   - No rows with noise `-`: say the change is only noise (list it) and stop.
-   - Sum of `+N` and `-M` over 5000: warn about the size and continue.
+5. **Hunks.** Run `SCOPE summary <mode> [paths]`. It prints `code_*` and `noise_*` totals, then one `noise` row per noise file.
+   - `code_hunks=0` and `noise_hunks=0`: say the scope has no changes and stop.
+   - `code_hunks=0`: say the change is only noise (list the noise files) and stop.
+   - `code_added` + `code_removed` over 5000: warn about the size and continue.
 6. **Resume.** If `D/hunks.tsv` and `D/state.md` exist, run `SCOPE diff-state D/hunks.tsv <mode> [paths]`:
    - `same`: keep the chunk's status.
    - `changed`: set the chunk to `not-reviewed`, clear its answers, rebuild its dossier.
    - `new`: send to dossier building.
    - `removed`: drop the hunk; drop a chunk with no hunks left.
    Ask: continue, or start over. If `state.md` cannot be parsed (no frontmatter or no `## c-` headings), offer to start over and move it to `state.md.bak`.
-7. **Dossiers.** Take the hunks to analyze (all non-noise hunks on a new session; `new` and `changed` ones on resume). Group them by top-level directory into batches of at most 400 changed lines.
+7. **Dossiers.** Take the hunks to analyze (all rows of `SCOPE hunks --code-only <mode> [paths]` on a new session; `new` and `changed` ones on resume). Group them by top-level directory into batches of at most 400 changed lines.
 
    **`agents` mode:** dispatch `branch-interview:dossier-builder` for each batch, at most 5 in parallel, with this prompt:
 
@@ -57,7 +57,7 @@ You interview the engineer about their own change until they show they own it. Y
 
 For each chunk in plan order:
 
-1. Show `file:lines` and the code (`SCOPE show <hunk_hash> <mode> [paths]`, or Read the lines). Trim long hunks to the essential part. Never show or quote the dossier. If `show` exits 5, the code changed: mark the chunk `changed` and go to the next one.
+1. Show `file:lines` and the code (`SCOPE show <hunk_hash> <mode> [paths]`, or Read the lines). Lines are new-file lines; a hunk with `+0` only removes code, so use `show` for it. Trim long hunks to the essential part. Never show or quote the dossier. If `show` exits 5, the code changed: mark the chunk `changed` and go to the next one.
 2. Go through the axes in order: what, why, alternatives, weaknesses. Skip an axis marked N/A in the dossier.
 3. Run the hint ladder for each axis:
 
