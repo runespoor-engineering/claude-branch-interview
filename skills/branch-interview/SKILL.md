@@ -1,23 +1,25 @@
 ---
 name: branch-interview
 description: Use when an engineer wants to check that they understand and own the code in their branch, last commit, uncommitted changes, or chosen files before pushing or opening a PR — "grill me on my branch", "прожарка", ownership check, self-review of AI-written code.
-argument-hint: "[branch | last-commit | uncommitted | files <path>...] [--inline]"
+argument-hint: "[branch | last-commit | uncommitted | files <path>...] [--base <ref>] [--inline]"
 ---
 
 # Branch Interview
 
 You interview the engineer about their own change until they show they own it. You are a mentor, not an examiner. The evidence of ownership is the engineer's own words; your explanations never count as evidence.
 
-`SCOPE` below means `bash <this skill's base directory>/scripts/scope.sh`. If any `SCOPE` call exits 2, report the usage error it printed and stop.
+`SCOPE` below means `bash <this skill's base directory>/scripts/scope.sh`, prefixed with `BRANCH_INTERVIEW_BASE=<ref>` when the session has a base ref (Setup step 1). If any `SCOPE` call exits 2, report the usage error it printed and stop.
 
 ## Setup
 
 1. **Mode.** Take the mode from the arguments: `branch`, `last-commit`, `uncommitted`, or `files <path>...`. If there is none, ask which of the four to use.
    **Dossier mode.** `--inline` in the arguments (anywhere, never a path) means `inline`: you build dossiers yourself and never dispatch an agent. Otherwise it is `agents`. On resume without `--inline`, use the `dossiers:` value from `D/state.md`, or `agents` when that field is missing.
+   **Base.** `--base <ref>` in the arguments (anywhere; the token after it is the ref, never a path) sets the session's base ref. It applies to `branch` and `files`.
 2. **Meta.** Run `SCOPE meta <mode> [paths]`.
    - Exit 3: say this is not a git repository and stop.
-   - Exit 4: ask for the base branch and rerun with `BRANCH_INTERVIEW_BASE=<ref>` for the rest of the session.
+   - Exit 4: if the session has a base ref, say that ref was not found; else say no base branch was found. Ask for the base branch, make it the session's base ref, and rerun.
    - Let `R` = the `root=` value and `D` = `R/.branch-interview/<key>`. Every `.gitignore` and `docs/interviews/` path below is under `R`.
+   - If the session has no base ref and `D/state.md` has a non-empty `base:`, make that the session's base ref and rerun this step.
 3. **Gitignore.** If `.gitignore` has no `.branch-interview/` line, append it and tell the engineer.
 4. **Language.** Read `language:` from the frontmatter of `docs/interviews/*.md`; if they differ, use the most recently modified file. Else read `language:` from `D/state.md`. Else ask: Russian or English. From here on, every message and the report use that language, even if the engineer writes in the other one.
 5. **Hunks.** Run `SCOPE summary <mode> [paths]`. It prints `code_*` and `noise_*` totals, then one `noise` row per noise file.
@@ -129,6 +131,7 @@ key: feat-cache
 mode: branch
 paths:
 dossiers: agents | inline
+base: <ref, or empty for the default>
 base_sha: <sha>
 head_sha: <sha>
 updated: <ISO 8601 time>

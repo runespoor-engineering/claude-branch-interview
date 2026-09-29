@@ -28,22 +28,28 @@ require_repo() {
 }
 
 base_ref() {
+  local b
   if [ -n "${BRANCH_INTERVIEW_BASE:-}" ]; then
     git rev-parse --verify -q "$BRANCH_INTERVIEW_BASE^{commit}" >/dev/null \
       || die 4 "base '$BRANCH_INTERVIEW_BASE' not found"
     echo "$BRANCH_INTERVIEW_BASE"
-  elif git rev-parse --verify -q "main^{commit}" >/dev/null; then
-    # A local main that only lags behind origin/main would give a stale base.
-    if git rev-parse --verify -q "origin/main^{commit}" >/dev/null \
-      && git merge-base --is-ancestor main origin/main; then
-      echo origin/main
+    return
+  fi
+  for b in main master; do
+    git rev-parse --verify -q "$b^{commit}" >/dev/null || continue
+    # A local branch that only lags behind its origin copy would give a stale base.
+    if git rev-parse --verify -q "origin/$b^{commit}" >/dev/null \
+      && git merge-base --is-ancestor "$b" "origin/$b"; then
+      echo "origin/$b"
     else
-      echo main
+      echo "$b"
     fi
-  elif git symbolic-ref -q refs/remotes/origin/HEAD >/dev/null; then
+    return
+  done
+  if git symbolic-ref -q refs/remotes/origin/HEAD >/dev/null; then
     git symbolic-ref -q --short refs/remotes/origin/HEAD
   else
-    die 4 "no base branch: main and origin/HEAD not found; set BRANCH_INTERVIEW_BASE"
+    die 4 "no base branch: main, master and origin/HEAD not found; set BRANCH_INTERVIEW_BASE"
   fi
 }
 
