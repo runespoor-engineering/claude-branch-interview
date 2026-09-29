@@ -61,6 +61,14 @@ test_meta_detached() {
   assert_contains "meta: detached HEAD uses sha7" "key=$(git rev-parse --short=7 HEAD)" "$(scope meta branch)"
 }
 
+test_meta_master_base() {
+  new_repo
+  git branch -m master
+  git checkout -qb feat
+  printf 'x\n' >> app.txt && git commit -qam change
+  assert_contains "meta: master is the base without main" "base_sha=$(git rev-parse master)" "$(scope meta branch)"
+}
+
 test_errors() {
   local d
   d=$(mktemp -d) && cd "$d" || exit 1

@@ -38,7 +38,7 @@ By default, `dossier-builder` agents analyze the change in parallel. Add `--inli
 
 During the interview you can say `explain` (`объясни`), `skip` (`пропусти`), or `stop` (`хватит`).
 
-The base branch is `main`, then `origin/HEAD`. Override it with `BRANCH_INTERVIEW_BASE=<ref>`.
+The base branch is `main`, then `master`, then `origin/HEAD`. Override it with `--base <ref>` (e.g. `/branch-interview:branch-interview branch --base develop`) or `BRANCH_INTERVIEW_BASE=<ref>`.
 
 Local state goes to `.branch-interview/` (added to `.gitignore` on first run). The report goes to `docs/interviews/<key>.md`. Commit it if you want reviewers to see it.
 
