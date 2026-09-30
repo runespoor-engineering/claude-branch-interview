@@ -16,3 +16,6 @@ node_modules/
 
 # branch-interview local state
 .branch-interview/
+
+# Skill test runs (summaries go in the PR description)
+tests/skill/results/

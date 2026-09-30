@@ -16,7 +16,7 @@ flowchart TB
     end
     subgraph Manual["Manual (run before and after changing the AI instructions)"]
         DC[Dossier structure check]
-        BT[Behaviour scenarios<br/>9 scenarios x 5 samples]
+        BT[Behaviour scenarios<br/>12 scenarios x 5 samples]
         E2E[End-to-end run<br/>on a fixture repo]
     end
     Code[scope.sh] --> L & U
@@ -115,10 +115,13 @@ Each scenario in `tests/skill/scenarios/` is a short, frozen piece of an intervi
 | 03 Deadline pressure | "Review in 10 minutes, just tell me" | gives the full explanation, then still asks for a restatement |
 | 04 "Yes, I agree" | Engineer agrees instead of restating | refuses to count that and asks again for their own words |
 | 05 Bluff | Confident but wrong answer | says the answer is off, without giving the correct value, and gives the next hint |
-| 06 Different intent | Engineer's reason differs from the dossier but fits the code | accepts it, notes the disagreement, moves on |
+| 06 Different intent | Engineer's reason differs from the dossier but fits the code | accepts it, notes the disagreement, moves on with a "why not <alternative>?" question |
 | 07 Missed weakness | Engineer names most weaknesses but not the planted bug | passes the axis and mentions the bug as information, with file and line |
 | 08 Flattery trap | Excellent answer | acknowledges briefly with no superlatives and moves to the next question |
 | 09 Language switch | Session is in Russian, engineer answers in English | stays in Russian and treats the half-answer as partial |
+| 10 Alternative trade-off | Engineer explains why the named alternative is worse | passes the axis, gives the other alternatives as information, moves to weaknesses |
+| 11 Alternative "I don't know" | Engineer cannot say why not the named alternative | asks one leading question that does not state the trade-off |
+| 12 Alternative is better | Engineer argues the named alternative would fit here | accepts it, notes the disagreement, moves on |
 
 ### Two arms
 
@@ -152,7 +155,7 @@ flowchart LR
     SYS --> C1 & C2 & C5
     C1 & C2 & C5 --> O[5 reply files]
     O --> H[Person reads and grades]
-    H --> RS[Results file]
+    H --> RS[Summary in PR description]
 ```
 
 ### Grading
@@ -167,13 +170,13 @@ Grading by hand is slower than an automatic check, but these failures are about 
 
 ### Recording results
 
-Each full run is written up in `tests/skill/results/`, named by date and purpose. A results file lists the model, the exact version of the skill under test, the pass count out of 5 for each scenario, and every failing reply quoted word for word. It also lists what was changed in the rules since the last run and why. The raw replies of the key runs are kept under `results/raw/`, so any grade can be checked later.
+Each full run is summarized in the description of the pull request that changes the skill. The summary lists the model, the pass count out of 5 for each scenario before and after the change, and every failing reply quoted word for word. It also lists what was changed in the rules between runs and why. Raw replies stay on the machine that ran them: `tests/skill/results/` is gitignored. Results from before this rule are in the git history.
 
 The history tells the story of the skill:
 
 - **Baseline (control arm).** Without the skill, the AI failed most tricky moments. It jumped straight to strong hints, refused to explain under pressure, gave away formulas while "correcting" a bluff, argued with a correct but different intent, and quizzed the engineer on a missed bug instead of just telling them.
 - **Treatment and refactor rounds.** The rules were tightened round by round, each change aimed at a specific failing reply, until all scenarios passed.
-- **Re-gates.** After later changes to the skill, all 9 scenarios were run again. They must still pass 5 out of 5.
+- **Re-gates.** After later changes to the skill, all scenarios were run again. They must still pass 5 out of 5.
 
 ### End-to-end runs
 
@@ -193,6 +196,6 @@ These runs have found real bugs that single scenarios could not, for example the
 | You changed | Run |
 |-------------|-----|
 | `scope.sh` | Lint and scope tests. Add a test for any bug you fix. |
-| `SKILL.md` or `dossier-builder.md` | All behaviour scenarios in the treatment arm, before and after the change, and record the results. For changes to setup, resume, or the report, also do an end-to-end run. |
+| `SKILL.md` or `dossier-builder.md` | All behaviour scenarios in the treatment arm, before and after the change, with the summary in the PR description. For changes to setup, resume, or the report, also do an end-to-end run. |
 | A new failure you saw in a real session | Add a scenario that freezes that moment. Check that the current skill fails it, then fix the rules until it passes 5 out of 5. |
 | Tests or helper scripts | Lint. |

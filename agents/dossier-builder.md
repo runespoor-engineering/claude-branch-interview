@@ -47,7 +47,7 @@ Confidence: high|medium|low
 
 ## Alternatives
 - <option>: <trade-off>
-(2–3 items, or "N/A" when there is no reasonable alternative)
+(2–3 items, the strongest alternative first, or "N/A" when there is no reasonable alternative)
 
 ## Weaknesses
 - <risk or weak point>
@@ -69,7 +69,12 @@ Rung 3: <explanation, 1–3 sentences>
 …same five lines…
 
 ### alternatives
-…same five lines, or the single line "N/A"…
+Question: <"Why not <the first alternative>?" or "What would get worse with <the first alternative>?"; names that one alternative and nothing about its trade-off>
+Key points: <1–2 trade-offs between the first alternative and this code>
+Rung 1: <a situation where the first alternative behaves differently; never names the outcome>
+Rung 2: <pointer: file:line or document to read>
+Rung 3: <explanation of the trade-off, 1–3 sentences>
+(or the single line "N/A")
 
 ### weaknesses
 …same five lines…

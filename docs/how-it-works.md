@@ -109,13 +109,13 @@ flowchart TD
     Q3 -->|"'yes, I agree'"| Q3
 ```
 
-**What counts as passing.** The answer must not say anything wrong about the code. For "what" and "why", it must cover every key point. For "alternatives" and "weaknesses", more than half of them is enough. A correct point said with "I think" still counts. "I don't know" does not.
+**What counts as passing.** The answer must not say anything wrong about the code. For "what" and "why", it must cover every key point. For "alternatives", the interviewer names one alternative and asks why the code does not use it; one correct trade-off is enough, in either direction. For "weaknesses", more than half of the key points is enough. A correct point said with "I think" still counts. "I don't know" does not.
 
 **What the interviewer does after a partial answer.** It says, in one sentence, which part of the question is still open, using only the words of the question itself. Then it asks one new question that describes a situation without naming the missing detail. The rule is strict: a hint must never contain its own answer.
 
-**What the interviewer does after a passing answer.** One short acknowledgement, no praise. For alternatives and weaknesses, it then lists the points you did not mention, and any possible bugs from the dossier, as plain information with a file and line. You are not asked to fix anything. Then it moves on.
+**What the interviewer does after a passing answer.** One short acknowledgement, no praise. For alternatives and weaknesses, it then lists the points you did not mention (the other alternatives from the dossier, or any possible bugs), as plain information with a file and line. You are not asked to fix anything. Then it moves on.
 
-**Your own view wins when it fits the code.** The dossier is a hint, not the truth. If you explain the intent differently, and the code is consistent with your explanation, the axis passes. The difference is recorded as a "disagreement". A correct weakness or alternative that the dossier missed also counts.
+**Your own view wins when it fits the code.** The dossier is a hint, not the truth. If you explain the intent differently, and the code is consistent with your explanation, the axis passes. The difference is recorded as a "disagreement". A correct weakness or trade-off that the dossier missed also counts.
 
 **Conversation rules.** Each message asks exactly one question. No yes/no questions. No "is it right that...". A bare "yes, I agree" after an explanation is not a restatement, so you are asked again to say it in your own words.
 

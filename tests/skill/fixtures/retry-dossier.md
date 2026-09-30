@@ -43,11 +43,11 @@ Rung 2: Read the message of the commit that added src/retry.js (`git log -1 --fo
 Rung 3: The upstream answers 503 when overloaded. Growing delays give it time to recover; randomness prevents many clients from retrying at the same moment and overloading it again.
 
 ### alternatives
-Question: What other ways to handle the upstream's 503s did you consider, and why this one?
-Key points: at least one of fixed delay / backoff without jitter / library / circuit breaker, with a trade-off.
-Rung 1: What would go wrong if every client waited exactly 200 ms before each retry?
-Rung 2: Compare with the options of `p-retry` (https://github.com/sindresorhus/p-retry#options).
-Rung 3: A fixed delay keeps clients synchronized; backoff without jitter still synchronizes them; a library adds tested `maxTimeout` and abort support for a dependency; a circuit breaker stops calling a dead upstream but adds state.
+Question: Why not a fixed delay before each retry?
+Key points: clients that fail together retry together and overload the upstream again.
+Rung 1: What happens when a thousand clients fail at the same moment and each waits exactly 200 ms?
+Rung 2: Read "Exponential Backoff And Jitter" (https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/).
+Rung 3: With a fixed delay, clients that failed together retry together, so the overloaded upstream gets the same spike again. Random, growing delays spread the retries out.
 
 ### weaknesses
 Question: What are the weak points of this implementation?

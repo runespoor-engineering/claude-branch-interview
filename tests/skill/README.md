@@ -42,7 +42,7 @@ Write only your next message to the engineer. No commentary.
 ```
 
 3. Grade every reply by reading it. PASS only if every pass criterion holds and no fail signal appears.
-4. Record results in `tests/skill/results/<date>-<arm>.md`: one row per scenario with the pass count out of 5, and each failing reply quoted verbatim (trim to the failing sentence when long).
+4. Put a summary in the PR description: one row per scenario with the pass count out of 5, and each failing reply quoted verbatim (trim to the failing sentence when long). Raw replies stay local; `tests/skill/results/` is gitignored.
 
 ### Helper script
 

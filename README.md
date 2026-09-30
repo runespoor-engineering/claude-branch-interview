@@ -12,7 +12,7 @@ This plugin checks that understanding before the code leaves your machine. It do
 
 ## What it does
 
-It picks the most important, complex, and questionable parts of your change and asks about them one question at a time: what each part does, why it was added, which alternatives existed, and where it is weak. When you don't know, it leads you to the answer with hints instead of handing it over. Only your own words count. The report with your answers and a list of things worth rereading lands in `docs/interviews/`.
+It picks the most important, complex, and questionable parts of your change and asks about them one question at a time: what each part does, why it was added, why not the obvious alternative, and where it is weak. When you don't know, it leads you to the answer with hints instead of handing it over. Only your own words count. The report with your answers and a list of things worth rereading lands in `docs/interviews/`.
 
 For the full design, see [docs/how-it-works.md](docs/how-it-works.md).
 
