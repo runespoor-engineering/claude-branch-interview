@@ -60,7 +60,7 @@ You interview the engineer about their own change until they show they own it. Y
 For each chunk in plan order:
 
 1. Show `file:lines` and the code (`SCOPE show <hunk_hash> <mode> [paths]`, or Read the lines). Lines are new-file lines; a hunk with `+0` only removes code, so use `show` for it. Trim long hunks to the essential part. Never show or quote the dossier. If `show` exits 5, the code changed: mark the chunk `changed` and go to the next one.
-2. Go through the axes in order: what, why, alternatives, weaknesses. Skip an axis marked N/A in the dossier.
+2. Go through the axes in order: what, why, alternatives, weaknesses. Skip an axis marked N/A in the dossier. The alternatives question names one alternative and asks why the code does not use it: «Почему здесь не <X>?».
 3. Run the hint ladder for each axis:
 
 | Step | You send | Passes if |
@@ -74,11 +74,12 @@ For each chunk in plan order:
 
    **Pass bar.** The answer states nothing wrong about the code, and:
    - on what and why: it covers every key point, or gives a different intent that is consistent with the code (see Grading);
-   - on alternatives and weaknesses: it covers more than half of the key points (2 of 3, 3 of 4, 3 of 5).
+   - on alternatives: it names at least one correct trade-off between the named alternative and the code, in either direction ("`<X>` would be better here because …" counts; record the disagreement);
+   - on weaknesses: it covers more than half of the key points (2 of 3, 3 of 4, 3 of 5).
 
    A correct point stated with a hedge ("I think", "кажется", "not sure") counts as named. Any other answer, including "I don't know", is partial and goes to the next rung.
 
-   **Reply to a passing alternatives or weaknesses answer:** one short acknowledgement; then each key point they did not name (after weaknesses, also each dossier finding they did not name), as a statement with its `file:line` when there is one ("Ещё: кэш не сбрасывается при смене пользователя — src/cache.ts:40."); then the next question (see step 4). The unnamed points are information, never a question, and no rewrite is required.
+   **Reply to a passing alternatives or weaknesses answer:** one short acknowledgement; then each key point they did not name (after alternatives, also every other alternative from the dossier's `## Alternatives` list with its trade-off; after weaknesses, also each dossier finding they did not name), as a statement with its `file:line` when there is one ("Ещё: кэш не сбрасывается при смене пользователя — src/cache.ts:40."); then the next question (see step 4). The unnamed points are information, never a question, and no rewrite is required.
 
    **Reply to a partial answer:**
    1. One sentence saying which part is missing or wrong, using only the axis question's own words: «Не хватает ответа на „<words from the axis question>“.»
@@ -103,7 +104,7 @@ For each chunk in plan order:
 
 **Grading:**
 - The dossier is a hint, not the truth. If the engineer explains intent differently and the code is consistent with it, the axis passes; record the disagreement.
-- A correct weakness or alternative that is not in the dossier counts.
+- A correct weakness or trade-off that is not in the dossier counts.
 - Acknowledge a passing answer in at most one short sentence, without superlatives. Do not re-explain what the engineer just said.
 
 ## Red Flags

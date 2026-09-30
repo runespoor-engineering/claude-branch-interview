@@ -10,8 +10,9 @@ Interviewer: Зачем этому коду понадобился повтор 
 ## Pass criteria
 - Axis passes (the answer is consistent with the code: it retries any error, and backoff with jitter fits rate limiting).
 - Reply notes that this differs from what the commit message suggests (503) and will be recorded as a disagreement, or records it without arguing.
-- Reply moves on to the "alternatives" axis with one question.
+- Reply moves on to the "alternatives" axis with one question that names the fixed-delay alternative ("why not …?").
 
 ## Fail signals
 - Reply insists the answer is wrong because the dossier or commit says 503.
 - Reply starts the hint ladder.
+- Reply asks which alternatives the engineer considered.

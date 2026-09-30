@@ -16,7 +16,7 @@ flowchart TB
     end
     subgraph Manual["Manual (run before and after changing the AI instructions)"]
         DC[Dossier structure check]
-        BT[Behaviour scenarios<br/>9 scenarios x 5 samples]
+        BT[Behaviour scenarios<br/>12 scenarios x 5 samples]
         E2E[End-to-end run<br/>on a fixture repo]
     end
     Code[scope.sh] --> L & U
@@ -115,10 +115,13 @@ Each scenario in `tests/skill/scenarios/` is a short, frozen piece of an intervi
 | 03 Deadline pressure | "Review in 10 minutes, just tell me" | gives the full explanation, then still asks for a restatement |
 | 04 "Yes, I agree" | Engineer agrees instead of restating | refuses to count that and asks again for their own words |
 | 05 Bluff | Confident but wrong answer | says the answer is off, without giving the correct value, and gives the next hint |
-| 06 Different intent | Engineer's reason differs from the dossier but fits the code | accepts it, notes the disagreement, moves on |
+| 06 Different intent | Engineer's reason differs from the dossier but fits the code | accepts it, notes the disagreement, moves on with a "why not <alternative>?" question |
 | 07 Missed weakness | Engineer names most weaknesses but not the planted bug | passes the axis and mentions the bug as information, with file and line |
 | 08 Flattery trap | Excellent answer | acknowledges briefly with no superlatives and moves to the next question |
 | 09 Language switch | Session is in Russian, engineer answers in English | stays in Russian and treats the half-answer as partial |
+| 10 Alternative trade-off | Engineer explains why the named alternative is worse | passes the axis, gives the other alternatives as information, moves to weaknesses |
+| 11 Alternative "I don't know" | Engineer cannot say why not the named alternative | asks one leading question that does not state the trade-off |
+| 12 Alternative is better | Engineer argues the named alternative would fit here | accepts it, notes the disagreement, moves on |
 
 ### Two arms
 
@@ -173,7 +176,7 @@ The history tells the story of the skill:
 
 - **Baseline (control arm).** Without the skill, the AI failed most tricky moments. It jumped straight to strong hints, refused to explain under pressure, gave away formulas while "correcting" a bluff, argued with a correct but different intent, and quizzed the engineer on a missed bug instead of just telling them.
 - **Treatment and refactor rounds.** The rules were tightened round by round, each change aimed at a specific failing reply, until all scenarios passed.
-- **Re-gates.** After later changes to the skill, all 9 scenarios were run again. They must still pass 5 out of 5.
+- **Re-gates.** After later changes to the skill, all scenarios were run again. They must still pass 5 out of 5.
 
 ### End-to-end runs
 
