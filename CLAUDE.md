@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `skills/branch-interview/scripts/scope.sh`: deterministic scope, hunk hashes, noise flags, state diff. Must run on bash 3.2.
 - `skills/branch-interview/report-template.md`: report skeleton with ru/en headings.
 - `agents/dossier-builder.md`: plugin agent that writes one dossier per chunk.
-- `tests/skill/`: fixture repo builder, interviewer scenarios, recorded runs.
+- `tests/skill/`: fixture repo builder, interviewer scenarios.
 
 ## Commands
 

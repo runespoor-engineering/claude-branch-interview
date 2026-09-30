@@ -155,7 +155,7 @@ flowchart LR
     SYS --> C1 & C2 & C5
     C1 & C2 & C5 --> O[5 reply files]
     O --> H[Person reads and grades]
-    H --> RS[Results file]
+    H --> RS[Summary in PR description]
 ```
 
 ### Grading
@@ -170,7 +170,7 @@ Grading by hand is slower than an automatic check, but these failures are about 
 
 ### Recording results
 
-Each full run is written up in `tests/skill/results/`, named by date and purpose. A results file lists the model, the exact version of the skill under test, the pass count out of 5 for each scenario, and every failing reply quoted word for word. It also lists what was changed in the rules since the last run and why. The raw replies of the key runs are kept under `results/raw/`, so any grade can be checked later.
+Each full run is summarized in the description of the pull request that changes the skill. The summary lists the model, the pass count out of 5 for each scenario before and after the change, and every failing reply quoted word for word. It also lists what was changed in the rules between runs and why. Raw replies stay on the machine that ran them: `tests/skill/results/` is gitignored. Results from before this rule are in the git history.
 
 The history tells the story of the skill:
 
@@ -196,6 +196,6 @@ These runs have found real bugs that single scenarios could not, for example the
 | You changed | Run |
 |-------------|-----|
 | `scope.sh` | Lint and scope tests. Add a test for any bug you fix. |
-| `SKILL.md` or `dossier-builder.md` | All behaviour scenarios in the treatment arm, before and after the change, and record the results. For changes to setup, resume, or the report, also do an end-to-end run. |
+| `SKILL.md` or `dossier-builder.md` | All behaviour scenarios in the treatment arm, before and after the change, with the summary in the PR description. For changes to setup, resume, or the report, also do an end-to-end run. |
 | A new failure you saw in a real session | Add a scenario that freezes that moment. Check that the current skill fails it, then fix the rules until it passes 5 out of 5. |
 | Tests or helper scripts | Lint. |
