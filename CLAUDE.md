@@ -8,19 +8,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Structure
 
-- `skills/branch-interview/SKILL.md`: session driver (setup, hint-ladder interview, state, report).
-- `skills/branch-interview/scripts/scope.sh`: deterministic scope, hunk hashes, noise flags, state diff. Must run on bash 3.2.
-- `skills/branch-interview/report-template.md`: report skeleton with ru/en headings.
-- `agents/dossier-builder.md`: plugin agent that writes one dossier per chunk.
-- `tests/skill/`: fixture repo builder, interviewer scenarios.
+- `skills/branch-interview/SKILL.md`: the whole skill (scope, picking decisions, interview, summary). No scripts, agents, or saved state.
+- `docs/how-it-works.md`: plain-language description of the skill.
 
 ## Commands
 
-- Test: `bash tests/scope.test.sh`
-- Lint: `shellcheck skills/branch-interview/scripts/scope.sh tests/*.sh tests/skill/*.sh`
 - Load locally: `claude --plugin-dir .`
 
-Changes to `SKILL.md` or `agents/dossier-builder.md` follow superpowers:writing-skills: rerun the scenarios in `tests/skill/` before and after.
+Keep the skill a single `SKILL.md`. Do not add scripts, agents, or test harnesses without asking.
 
 ## Conventions
 
