@@ -97,7 +97,9 @@ A moment where the AI already behaves well without any guidance needs no new rul
 
 - a retry helper with a growing, random wait, and two planted problems: the wait has no upper limit, and every error is retried, even ones that can never succeed;
 - a cache with a planted weakness: old entries are never removed;
-- a small file that wires the two together;
+- a small file that wires the two together and reads retry limits from a config file;
+- the config file itself: a decision that lives outside source code;
+- supporting changes: a test for the retry helper, a document that describes it, and a lint rule tweak;
 - noise: a lock file and a renamed document.
 
 Because the problems are planted on purpose, it is clear what a good interviewer should notice.
