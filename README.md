@@ -12,7 +12,7 @@ This plugin checks that understanding before the code leaves your machine. It do
 
 ## What it does
 
-It picks the most important, complex, and questionable parts of your change and asks about them one question at a time: what each part does, why it was added, why not the obvious alternative, and where it is weak. When you don't know, it leads you to the answer with hints instead of handing it over. Only your own words count. The report with your answers and a list of things worth rereading lands in `docs/interviews/`.
+It picks the decisions in your change (at most 5, riskiest first) and asks about them one question at a time: what each part does, why it was added, why not the obvious alternative, and where it is weak. When you don't know, it leads you to the answer with hints instead of handing it over. Only your own words count. At the end you get a summary in the chat: what you knew, what needed a hint, and what to reread. The whole plugin is one `SKILL.md`, with no scripts, agents, or saved state.
 
 For the full design, see [docs/how-it-works.md](docs/how-it-works.md).
 
@@ -34,23 +34,17 @@ The plugin is listed in the [runespoor marketplace](https://github.com/runespoor
 /branch-interview:branch-interview files <path>...    # chosen files vs the merge-base
 ```
 
-By default, `dossier-builder` agents analyze the change in parallel. Add `--inline` (e.g. `/branch-interview:branch-interview branch --inline`) to build the dossiers in the main session instead. Inline mode uses no agents and is faster on small changes, but on large ones the analysis fills the session's context. In inline mode the dossier files, which hold the answers, appear in the tool output; do not expand them.
+By default you are asked about at most 5 decisions. Tests, docs, and other changes that only follow from a decision are not asked about directly. Add `--all` to list every decision.
 
-During the interview you can say `explain` (`объясни`), `skip` (`пропусти`), or `stop` (`хватит`).
+During the interview you can say `explain`, `skip`, or `stop`, in any language.
 
-The base branch is `main`, then `master`, then `origin/HEAD`. Override it with `--base <ref>` (e.g. `/branch-interview:branch-interview branch --base develop`) or `BRANCH_INTERVIEW_BASE=<ref>`.
-
-Local state goes to `.branch-interview/` (added to `.gitignore` on first run). The report goes to `docs/interviews/<key>.md`. Commit it if you want reviewers to see it.
+The base branch is `main`, then `master`, then `origin/HEAD`. Override it with `--base <ref>` (e.g. `/branch-interview:branch-interview branch --base develop`).
 
 ## Development
 
 ```
-bash tests/scope.test.sh                    # scope.sh tests
-bash tests/check-dossier.sh <dossier.md>    # dossier structure check
-claude --plugin-dir .                       # load the plugin from this checkout
+claude --plugin-dir .    # load the plugin from this checkout
 ```
-
-Behavior tests for the interviewer are described in [tests/skill/README.md](tests/skill/README.md) and [docs/testing.md](docs/testing.md).
 
 ## Contributing
 
